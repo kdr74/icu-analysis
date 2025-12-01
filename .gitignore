@@ -1,0 +1,25 @@
+# Virtual environment
+venv/
+.env
+
+# Raw data - NEVER COMMIT
+data/raw/
+data/processed/
+*_master_registry.*
+*.xls
+*.xlsx
+*.csv
+*hospital_number*
+*nhs_number*
+patient_identifiers.*
+hashing_salt.txt
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Operating system
+.DS_Store
+Thumbs.db
