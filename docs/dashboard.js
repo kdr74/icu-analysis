@@ -1,8 +1,8 @@
 // ICU Dashboard JavaScript
 // Loads aggregated data and creates interactive visualisations
 
-// Configuration
-const DATA_PATH = './'; // Relative path to data files
+// Configuration - GitHub Pages serves from docs/, so data is at ../data/aggregated/
+const DATA_PATH = '../data/aggregated/';
 let allData = {};
 let currentFilters = {
     unit: 'all',
@@ -21,9 +21,13 @@ const COLORS = {
 // Load all data files
 async function loadData() {
     try {
-        const response = await fetch(`${DATA_PATH}../data/aggregated/complete_statistics.json`);
-        if (!response.ok) throw new Error('Failed to load data');
+        const response = await fetch(`${DATA_PATH}complete_statistics.json`);
+        if (!response.ok) {
+            throw new Error(`Failed to load data: ${response.status} ${response.statusText}`);
+        }
         allData = await response.json();
+        
+        console.log('Data loaded successfully:', allData);
         
         // Update metadata
         updateMetadata();
@@ -43,7 +47,14 @@ async function loadData() {
     } catch (error) {
         console.error('Error loading data:', error);
         document.querySelector('.container').innerHTML = 
-            '<div class="error">Error loading data. Please ensure data files are present in data/aggregated/</div>';
+            `<div class="error">
+                <strong>Error loading data:</strong> ${error.message}<br><br>
+                Please ensure:<br>
+                • Data files exist in data/aggregated/<br>
+                • You've run the analysis scripts to generate statistics<br>
+                • Files are committed to GitHub<br><br>
+                Expected file: ${DATA_PATH}complete_statistics.json
+            </div>`;
     }
 }
 
