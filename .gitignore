@@ -23,3 +23,6 @@ __pycache__/
 # Operating system
 .DS_Store
 Thumbs.db
+
+# ALLOW aggregated data (safe to share)
+!data/aggregated/*.json

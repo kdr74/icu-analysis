@@ -1,0 +1,12 @@
+{
+  "Cardiac Arrest": 8,
+  "Stroke": 7,
+  "Diabetic Ketoacidosis": 7,
+  "Sepsis": 6,
+  "Respiratory Failure": "<5",
+  "Myocardial Infarction": "<5",
+  "Trauma": "<5",
+  "Multi-organ Failure": "<5",
+  "Post-operative": "<5",
+  "Pneumonia": "<5"
+}
