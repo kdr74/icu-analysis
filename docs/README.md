@@ -7,9 +7,9 @@ Interactive visualisation of ICU admission data across three units:
 
 ## Access
 
-**Live Dashboard:** [View Dashboard](https://yourusername.github.io/icu-analysis/)
+**Live Dashboard:** [View Dashboard](https://YOUR_GITHUB_USERNAME.github.io/icu-analysis/)
 
-Replace `yourusername` with your GitHub username.
+Replace `YOUR_GITHUB_USERNAME` with your GitHub username.
 
 ## Features
 

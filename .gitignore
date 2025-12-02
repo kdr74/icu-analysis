@@ -2,27 +2,28 @@
 venv/
 .env
 
-# Raw data - NEVER COMMIT
-data/raw/
-data/processed/
-*_master_registry.*
-*.xls
-*.xlsx
-*.csv
-*hospital_number*
-*nhs_number*
-patient_identifiers.*
-hashing_salt.txt
-
 # Python
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
-*.ipynb_checkpoints
 
 # Operating system
 .DS_Store
 Thumbs.db
 
-# ALLOW aggregated data (safe to share)
-!data/aggregated/*.json
+# Sensitive data files - NEVER COMMIT
+data/raw/
+data/processed/
+hashing_salt.txt
+*_master_registry.*
+*hospital_number*
+*nhs_number*
+patient_identifiers.*
+
+# Block specific data file types in data directory
+data/**/*.csv
+data/**/*.xls
+data/**/*.xlsx
+
+# But we DO want JSON files in aggregated (they're safe)
+# Nothing blocks them now
