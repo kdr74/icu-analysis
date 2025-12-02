@@ -1,10 +1,6 @@
 // ICU Dashboard JavaScript
-// Loads aggregated data and creates interactive visualisations
-
-// Configuration - correct path for GitHub Pages
-// GitHub Pages serves from: https://kdr74.github.io/icu-analysis/
-// So data is at: /icu-analysis/data/aggregated/
-const DATA_PATH = '/icu-analysis/data/aggregated/';
+// GitHub Pages serves from /docs, so data is at ./data/aggregated/
+const DATA_PATH = './data/aggregated/';
 let allData = {};
 let currentFilters = {
     unit: 'all',
@@ -82,17 +78,12 @@ function updateMetadata() {
 function createMonthlyAdmissionsChart() {
     const data = allData.monthly_admissions;
     
-    // Get all months
     const months = Object.keys(data);
-    
-    // Get all units
     const units = ['A600', 'C604', 'WICU'];
     
-    // Create traces for each unit
     const traces = units.map(unit => {
         const values = months.map(month => {
             const value = data[month][unit];
-            // Handle suppressed values
             return (typeof value === 'string' && value.startsWith('<')) ? null : value;
         });
         
@@ -108,19 +99,11 @@ function createMonthlyAdmissionsChart() {
     });
     
     const layout = {
-        xaxis: {
-            title: 'Month',
-            tickangle: -45
-        },
-        yaxis: {
-            title: 'Number of Admissions'
-        },
+        xaxis: { title: 'Month', tickangle: -45 },
+        yaxis: { title: 'Number of Admissions' },
         hovermode: 'closest',
         showlegend: true,
-        legend: {
-            orientation: 'h',
-            y: -0.2
-        },
+        legend: { orientation: 'h', y: -0.2 },
         margin: { t: 20, b: 80 }
     };
     
@@ -180,15 +163,9 @@ function createOutcomeChart() {
     const layout = {
         barmode: 'stack',
         xaxis: { title: 'ICU Unit' },
-        yaxis: { 
-            title: 'Percentage (%)',
-            range: [0, 100]
-        },
+        yaxis: { title: 'Percentage (%)', range: [0, 100] },
         showlegend: true,
-        legend: {
-            orientation: 'h',
-            y: -0.2
-        },
+        legend: { orientation: 'h', y: -0.2 },
         margin: { t: 20, b: 60 }
     };
     
@@ -199,7 +176,6 @@ function createOutcomeChart() {
 function createDiagnosisChart() {
     const data = allData.diagnosis_distribution;
     
-    // Filter out suppressed values and sort
     const diagnoses = Object.entries(data)
         .filter(([_, count]) => !(typeof count === 'string' && count.startsWith('<')))
         .sort((a, b) => b[1] - a[1])
@@ -210,20 +186,14 @@ function createDiagnosisChart() {
         y: diagnoses.map(d => d[0]),
         type: 'bar',
         orientation: 'h',
-        marker: { 
-            color: '#667eea',
-            opacity: 0.8
-        },
+        marker: { color: '#667eea', opacity: 0.8 },
         text: diagnoses.map(d => d[1]),
         textposition: 'auto'
     };
     
     const layout = {
         xaxis: { title: 'Number of Cases' },
-        yaxis: { 
-            automargin: true,
-            tickfont: { size: 11 }
-        },
+        yaxis: { automargin: true, tickfont: { size: 11 } },
         margin: { l: 150, t: 20, b: 60 }
     };
     
@@ -239,7 +209,6 @@ function createLOSChart() {
     const q25 = units.map(unit => data[unit].q25);
     const q75 = units.map(unit => data[unit].q75);
     
-    // Calculate error bars (distance from median to quartiles)
     const errors_y_minus = medians.map((med, i) => med - q25[i]);
     const errors_y_plus = medians.map((med, i) => q75[i] - med);
     
@@ -247,10 +216,7 @@ function createLOSChart() {
         x: units,
         y: medians,
         type: 'bar',
-        marker: { 
-            color: units.map(unit => COLORS[unit]),
-            opacity: 0.8
-        },
+        marker: { color: units.map(unit => COLORS[unit]), opacity: 0.8 },
         error_y: {
             type: 'data',
             symmetric: false,
@@ -285,9 +251,7 @@ function createAdmissionSourcesChart() {
         labels: sources,
         values: values,
         type: 'pie',
-        marker: { 
-            colors: ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b']
-        },
+        marker: { colors: ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b'] },
         textinfo: 'label+percent',
         hovertemplate: '<b>%{label}</b><br>Count: %{value}<br>%{percent}<extra></extra>'
     };
@@ -304,7 +268,6 @@ function createAdmissionSourcesChart() {
 function createSpecialtiesChart() {
     const data = allData.specialties;
     
-    // Filter and sort
     const specialties = Object.entries(data)
         .filter(([_, count]) => !(typeof count === 'string' && count.startsWith('<')))
         .sort((a, b) => b[1] - a[1])
@@ -315,20 +278,14 @@ function createSpecialtiesChart() {
         y: specialties.map(s => s[0]),
         type: 'bar',
         orientation: 'h',
-        marker: { 
-            color: '#764ba2',
-            opacity: 0.8
-        },
+        marker: { color: '#764ba2', opacity: 0.8 },
         text: specialties.map(s => s[1]),
         textposition: 'auto'
     };
     
     const layout = {
         xaxis: { title: 'Number of Cases' },
-        yaxis: { 
-            automargin: true,
-            tickfont: { size: 11 }
-        },
+        yaxis: { automargin: true, tickfont: { size: 11 } },
         margin: { l: 120, t: 20, b: 60 }
     };
     
@@ -348,7 +305,7 @@ function setupFilters() {
     });
 }
 
-// Apply filters (simplified - full implementation would filter data before charting)
+// Apply filters
 function applyFilters() {
     console.log('Filters applied:', currentFilters);
 }
