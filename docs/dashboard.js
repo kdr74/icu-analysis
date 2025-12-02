@@ -1,8 +1,10 @@
 // ICU Dashboard JavaScript
 // Loads aggregated data and creates interactive visualisations
 
-// Configuration - GitHub Pages serves from docs/, so data is at ../data/aggregated/
-const DATA_PATH = '../data/aggregated/';
+// Configuration - correct path for GitHub Pages
+// GitHub Pages serves from: https://kdr74.github.io/icu-analysis/
+// So data is at: /icu-analysis/data/aggregated/
+const DATA_PATH = '/icu-analysis/data/aggregated/';
 let allData = {};
 let currentFilters = {
     unit: 'all',
@@ -49,11 +51,8 @@ async function loadData() {
         document.querySelector('.container').innerHTML = 
             `<div class="error">
                 <strong>Error loading data:</strong> ${error.message}<br><br>
-                Please ensure:<br>
-                • Data files exist in data/aggregated/<br>
-                • You've run the analysis scripts to generate statistics<br>
-                • Files are committed to GitHub<br><br>
-                Expected file: ${DATA_PATH}complete_statistics.json
+                Expected file: ${DATA_PATH}complete_statistics.json<br>
+                Please wait a few minutes for GitHub Pages to update after pushing changes.
             </div>`;
     }
 }
@@ -351,15 +350,7 @@ function setupFilters() {
 
 // Apply filters (simplified - full implementation would filter data before charting)
 function applyFilters() {
-    // For now, show alert that filtering is applied
-    // Full implementation would re-filter the data and recreate charts
     console.log('Filters applied:', currentFilters);
-    
-    // Note: A full implementation would:
-    // 1. Filter the monthly admissions data by time period
-    // 2. Filter all data by unit if specific unit selected
-    // 3. Recreate all charts with filtered data
-    // This would require more complex data processing
 }
 
 // Initialize dashboard when page loads
