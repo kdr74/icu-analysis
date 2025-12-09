@@ -1,0 +1,52 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Test All Systems",
+            "type": "shell",
+            "command": "${workspaceFolder}/venv/bin/python",
+            "args": ["${workspaceFolder}/scripts/test_all_systems.py"],
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Generate Analysis",
+            "type": "shell",
+            "command": "${workspaceFolder}/venv/bin/python",
+            "args": ["${workspaceFolder}/scripts/demo_analysis.py"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Validate Registry",
+            "type": "shell",
+            "command": "${workspaceFolder}/venv/bin/python",
+            "args": [
+                "${workspaceFolder}/scripts/validate_registry.py",
+                "${workspaceFolder}/data/processed/master_registry.csv"
+            ],
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Open Dashboard Locally",
+            "type": "shell",
+            "command": "open",
+            "args": ["${workspaceFolder}/docs/index.html"],
+            "group": "build",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared"
+            }
+        }
+    ]
+}

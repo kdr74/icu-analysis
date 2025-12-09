@@ -1,0 +1,34 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Run: Demo Analysis",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/demo_analysis.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Run: Test All Systems",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/test_all_systems.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Run: Multi-File Processing",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/demo_multi_file_processing.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}

@@ -27,3 +27,6 @@ data/**/*.xlsx
 
 # But we DO want JSON files in aggregated (they're safe)
 # Nothing blocks them now
+
+# VS Code workspace file (personal preference)
+*.code-workspace
