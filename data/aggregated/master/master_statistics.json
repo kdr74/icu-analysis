@@ -1,0 +1,59 @@
+{
+  "metadata": {
+    "generated": "2025-12-21T18:03:11.108104",
+    "total_admissions": 23488,
+    "unique_patients": 19211
+  },
+  "by_unit": {
+    "C604": 13189,
+    "A600": 7979,
+    "Weston": 1474
+  },
+  "by_specialty": {
+    "Cardiac": 10839,
+    "Cardiology": 1821,
+    "HPB": 1513,
+    "Respiratory": 1025,
+    "Thoracic": 791,
+    "UGI": 782,
+    "LGI": 675,
+    "COTE & Stroke": 591,
+    "General Surgery": 522,
+    "Acute Medicine": 430,
+    "Unknown": 415,
+    "MaxFax": 354,
+    "General Medicine": 351,
+    "Haematology": 325,
+    "O&G": 305,
+    "T&O": 276,
+    "Hepatology": 234,
+    "Gastroenterology": 232,
+    "ENT": 229,
+    "ICM": 190
+  },
+  "outcomes": {
+    "icu_deaths": 1726,
+    "icu_survivors": 21762,
+    "icu_mortality_percent": 7.35
+  },
+  "length_of_stay": {
+    "median_days": 4.0,
+    "mean_days": 5.2,
+    "min_days": 0,
+    "max_days": 150
+  },
+  "monthly_trends": {
+    "2024-02": 287,
+    "2024-03": 291,
+    "2024-04": 285,
+    "2024-05": 283,
+    "2024-06": 251,
+    "2024-07": 291,
+    "2024-08": 283,
+    "2024-09": 261,
+    "2024-10": 280,
+    "2024-11": 281,
+    "2024-12": 251,
+    "2025-01": 68
+  }
+}
