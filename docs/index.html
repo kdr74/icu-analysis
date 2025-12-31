@@ -640,33 +640,67 @@
             const metric=document.getElementById('customMetric').value,groupBy=document.getElementById('customGroupBy').value,chartType=document.getElementById('customChartType').value;
             const fu=document.getElementById('customFilterUnit').value,fs=document.getElementById('customFilterSpec').value,fa=document.getElementById('customFilterAge').value,fo=document.getElementById('customFilterOutcome').value;
             let cd=allData.filter(r=>{if(fu&&r.icu_ward!==fu)return false;if(fs&&r.specialty!==fs)return false;if(fa&&r.age_group!==fa)return false;if(fo&&r.icu_death!==fo)return false;return true;});
-            if(!cd.length){alert('No data');return;}
+            if(!cd.length){alert('No data matches filters');return;}
+            
             if(chartType==='box'){
                 const grp={}; cd.forEach(r=>{const k=r[groupBy];if(!grp[k])grp[k]=[];grp[k].push(r.los);});
-                const traces=Object.entries(grp).map(([k,v])=>({type:'box',y:v.filter(x=>x>0),name:k,boxmean:'sd',marker:{color:colors.primary}}));
-                Plotly.newPlot('customChart',traces,{...baseLayout,height:400,yaxis:{...baseLayout.yaxis,title:'Days'}},plotlyConfig);
-                document.getElementById('customChartTitle').textContent='LOS by '+groupBy+' (n='+cd.length+')';
+                const traces=Object.entries(grp).map(([k,v],i)=>({type:'box',y:v.filter(x=>x>0),name:k,boxmean:'sd',marker:{color:colors.terra[i%colors.terra.length]},line:{width:2}}));
+                Plotly.newPlot('customChart',traces,{...baseLayout,height:400,yaxis:{...baseLayout.yaxis,title:'Days in ICU'}},plotlyConfig);
+                document.getElementById('customChartTitle').textContent='LOS Distribution by '+groupBy+' (n='+cd.length+')';
                 document.getElementById('customChartContainer').style.display='block';
+                document.getElementById('customChartContainer').scrollIntoView({behavior:'smooth'});
                 return;
             }
-            const grp={}; cd.forEach(r=>{const k=r[groupBy];if(!grp[k])grp[k]=[];grp[k].push(r);});
+            
+            const grp={}; cd.forEach(r=>{const k=r[groupBy]||'Unknown';if(!grp[k])grp[k]=[];grp[k].push(r);});
             const res={};
             Object.entries(grp).forEach(([k,recs])=>{
                 if(metric==='count')res[k]=recs.length;
-                else if(metric==='mortality')res[k]=((recs.filter(r=>r.icu_death==='Yes').length/recs.length)*100).toFixed(1);
-                else if(metric==='avg_los')res[k]=(recs.reduce((s,r)=>s+r.los,0)/recs.length).toFixed(1);
-                else if(metric==='median_los'){const srt=recs.map(r=>r.los).sort((a,b)=>a-b);const mid=Math.floor(srt.length/2);res[k]=srt.length%2?srt[mid]:((srt[mid-1]+srt[mid])/2).toFixed(1);}
+                else if(metric==='mortality')res[k]=recs.length>0?((recs.filter(r=>r.icu_death==='Yes').length/recs.length)*100).toFixed(1):0;
+                else if(metric==='avg_los'){const losVals=recs.map(r=>r.los).filter(l=>l>0);res[k]=losVals.length>0?(losVals.reduce((s,v)=>s+v,0)/losVals.length).toFixed(1):0;}
+                else if(metric==='median_los'){const losVals=recs.map(r=>r.los).filter(l=>l>0).sort((a,b)=>a-b);const mid=Math.floor(losVals.length/2);res[k]=losVals.length>0?(losVals.length%2?losVals[mid]:((losVals[mid-1]+losVals[mid])/2).toFixed(1)):0;}
                 else if(metric==='total_los')res[k]=recs.reduce((s,r)=>s+r.los,0);
             });
-            let srt; if(groupBy==='year_month')srt=Object.entries(res).sort((a,b)=>a[0].localeCompare(b[0]));else if(metric==='count'||metric==='total_los')srt=Object.entries(res).sort((a,b)=>b[1]-a[1]).slice(0,15);else srt=Object.entries(res).sort((a,b)=>a[0].localeCompare(b[0]));
+            
+            let srt;
+            if(groupBy==='year_month')srt=Object.entries(res).sort((a,b)=>a[0].localeCompare(b[0]));
+            else if(metric==='count'||metric==='total_los')srt=Object.entries(res).sort((a,b)=>b[1]-a[1]).slice(0,15);
+            else srt=Object.entries(res).sort((a,b)=>a[0].localeCompare(b[0]));
+            
             const labels=srt.map(d=>d[0]),values=srt.map(d=>parseFloat(d[1]));
-            const metricNames={'count':'Admissions','mortality':'Mortality (%)','avg_los':'Avg LOS','median_los':'Median LOS','total_los':'Total Days'};
+            const metricNames={'count':'Admissions','mortality':'Mortality (%)','avg_los':'Avg LOS (days)','median_los':'Median LOS (days)','total_los':'Total Patient Days'};
+            
             if(chartType==='bar'){
                 const horiz=labels.length>8||labels.some(l=>l.length>15);
-                Plotly.newPlot('customChart',[{type:'bar',[horiz?'y':'x']:labels,[horiz?'x':'y']:values,orientation:horiz?'h':'',marker:{color:colors.terra},text:values.map(v=>v.toLocaleString()),textposition:'outside',textfont:{size:11,color:'#666'}}],{...baseLayout,margin:horiz?{t:20,b:40,l:160,r:60}:{t:20,b:100,l:60,r:20},height:horiz?Math.max(400,labels.length*30):400},plotlyConfig);
+                Plotly.newPlot('customChart',[{
+                    type:'bar',
+                    [horiz?'y':'x']:labels,
+                    [horiz?'x':'y']:values,
+                    orientation:horiz?'h':'v',
+                    marker:{color:colors.terra.slice(0,labels.length)},
+                    text:values.map(v=>v.toLocaleString()),
+                    textposition:'outside',
+                    textfont:{size:11,color:'#666'}
+                }],{
+                    ...baseLayout,
+                    margin:horiz?{t:20,b:40,l:160,r:60}:{t:20,b:100,l:60,r:20},
+                    height:horiz?Math.max(400,labels.length*30):400,
+                    xaxis:horiz?{...baseLayout.xaxis,title:metricNames[metric]}:{...baseLayout.xaxis,title:groupBy},
+                    yaxis:horiz?{...baseLayout.yaxis,title:groupBy}:{...baseLayout.yaxis,title:metricNames[metric]}
+                },plotlyConfig);
             }else{
-                Plotly.newPlot('customChart',[{type:'scatter',mode:'lines+markers',x:labels,y:values,line:{color:colors.primary,width:2.5},marker:{color:colors.primary,size:5},fill:'tozeroy',fillcolor:'rgba(160,97,106,0.12)'}],{...baseLayout,height:400},plotlyConfig);
+                Plotly.newPlot('customChart',[{
+                    type:'scatter',
+                    mode:'lines+markers',
+                    x:labels,
+                    y:values,
+                    line:{color:colors.primary,width:2.5,shape:'spline'},
+                    marker:{color:colors.primary,size:5,line:{color:'white',width:2}},
+                    fill:'tozeroy',
+                    fillcolor:'rgba(160,97,106,0.12)'
+                }],{...baseLayout,height:400,xaxis:{...baseLayout.xaxis,title:groupBy},yaxis:{...baseLayout.yaxis,title:metricNames[metric]}},plotlyConfig);
             }
+            
             document.getElementById('customChartTitle').textContent=metricNames[metric]+' by '+groupBy+' (n='+cd.length+')';
             document.getElementById('customChartContainer').style.display='block';
             document.getElementById('customChartContainer').scrollIntoView({behavior:'smooth'});
