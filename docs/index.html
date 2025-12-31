@@ -5,37 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ICU Analysis Dashboard</title>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         :root {
-            --primary: #2563eb;
-            --primary-light: #3b82f6;
-            --secondary: #64748b;
-            --accent: #f59e0b;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --info: #06b6d4;
-            --purple: #8b5cf6;
+            /* Terracotta/Earthy palette - subtle and cohesive */
+            --primary: #a0616a;
+            --primary-light: #b8808a;
+            --primary-dark: #7d4a52;
             
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8fafc;
-            --bg-tertiary: #f1f5f9;
+            --secondary: #c19a9a;
+            --accent: #d4b5a6;
             
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --text-tertiary: #94a3b8;
+            --terracotta-1: #7d4a52;
+            --terracotta-2: #a0616a;
+            --terracotta-3: #b8808a;
+            --terracotta-4: #c19a9a;
+            --terracotta-5: #d4b5a6;
+            --terracotta-6: #e8d5c4;
             
-            --border: #e2e8f0;
-            --border-light: #f1f5f9;
+            --bg-primary: #fafafa;
+            --bg-secondary: #f5f5f5;
+            --bg-card: #ffffff;
             
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --text-primary: #2d2d2d;
+            --text-secondary: #666666;
+            --text-tertiary: #999999;
+            
+            --border: #e5e5e5;
+            --border-light: #f0f0f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 2px 4px -1px rgba(0, 0, 0, 0.08);
         }
         
         body {
@@ -44,51 +49,44 @@
             color: var(--text-primary);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
         }
         
-        .container {
-            max-width: 1800px;
-            margin: 0 auto;
-            padding: 32px 24px;
-        }
+        .container { max-width: 1800px; margin: 0 auto; padding: 32px 24px; }
         
         /* Header */
         .header {
-            background: var(--bg-primary);
+            background: var(--bg-card);
             padding: 48px;
-            border-radius: 24px;
+            border-radius: 12px;
             margin-bottom: 32px;
-            box-shadow: var(--shadow);
             border: 1px solid var(--border-light);
         }
         
         .header h1 {
-            font-size: 36px;
-            font-weight: 700;
+            font-size: 32px;
+            font-weight: 600;
             color: var(--text-primary);
             margin-bottom: 8px;
             letter-spacing: -0.02em;
         }
         
         .header .subtitle {
-            font-size: 15px;
+            font-size: 14px;
             color: var(--text-secondary);
             font-weight: 400;
         }
         
         /* Section */
         .section {
-            background: var(--bg-primary);
-            border-radius: 20px;
+            background: var(--bg-card);
+            border-radius: 12px;
             padding: 32px;
             margin-bottom: 24px;
-            box-shadow: var(--shadow);
             border: 1px solid var(--border-light);
         }
         
         .section-title {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
             color: var(--text-primary);
             margin-bottom: 24px;
@@ -96,7 +94,7 @@
         }
         
         .section-subtitle {
-            font-size: 14px;
+            font-size: 13px;
             color: var(--text-secondary);
             margin-bottom: 20px;
             line-height: 1.5;
@@ -110,13 +108,10 @@
             margin-bottom: 20px;
         }
         
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-        }
+        .filter-group { display: flex; flex-direction: column; }
         
         .filter-label {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             color: var(--text-secondary);
             text-transform: uppercase;
@@ -125,17 +120,15 @@
         }
         
         /* Custom Select */
-        .custom-select {
-            position: relative;
-        }
+        .custom-select { position: relative; }
         
         .select-button {
             width: 100%;
             padding: 10px 14px;
             background: var(--bg-primary);
-            border: 1.5px solid var(--border);
-            border-radius: 12px;
-            font-size: 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
@@ -147,12 +140,12 @@
         
         .select-button:hover {
             border-color: var(--primary-light);
-            background: var(--bg-secondary);
+            background: var(--bg-card);
         }
         
         .select-button.active {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            background: var(--bg-card);
         }
         
         .select-arrow {
@@ -161,45 +154,39 @@
             transition: transform 0.2s ease;
         }
         
-        .select-button.active .select-arrow {
-            transform: rotate(180deg);
-        }
+        .select-button.active .select-arrow { transform: rotate(180deg); }
         
         .select-dropdown {
             position: absolute;
-            top: calc(100% + 8px);
+            top: calc(100% + 4px);
             left: 0;
             right: 0;
-            background: var(--bg-primary);
-            border: 1.5px solid var(--border);
-            border-radius: 12px;
-            box-shadow: var(--shadow-lg);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
             max-height: 320px;
             overflow-y: auto;
             z-index: 1000;
             display: none;
         }
         
-        .select-dropdown.active {
-            display: block;
-        }
+        .select-dropdown.active { display: block; }
         
         .select-option {
             padding: 10px 14px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            transition: background 0.15s ease;
-            font-size: 14px;
+            transition: background 0.1s ease;
+            font-size: 13px;
             color: var(--text-primary);
         }
         
-        .select-option:hover {
-            background: var(--bg-secondary);
-        }
+        .select-option:hover { background: var(--bg-secondary); }
         
         .select-option.select-all {
-            border-bottom: 1.5px solid var(--border-light);
+            border-bottom: 1px solid var(--border-light);
             font-weight: 600;
             color: var(--primary);
         }
@@ -215,23 +202,20 @@
         select, input[type="date"] {
             padding: 10px 14px;
             background: var(--bg-primary);
-            border: 1.5px solid var(--border);
-            border-radius: 12px;
-            font-size: 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
             color: var(--text-primary);
             font-weight: 500;
             transition: all 0.2s ease;
             font-family: 'Inter', sans-serif;
         }
         
-        select:hover, input[type="date"]:hover {
-            border-color: var(--primary-light);
-        }
-        
+        select:hover, input[type="date"]:hover { border-color: var(--primary-light); }
         select:focus, input[type="date"]:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            background: var(--bg-card);
         }
         
         /* Buttons */
@@ -240,32 +224,27 @@
             background: var(--primary);
             color: white;
             border: none;
-            border-radius: 12px;
-            font-size: 14px;
+            border-radius: 8px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
             font-family: 'Inter', sans-serif;
-            box-shadow: var(--shadow-sm);
         }
         
         button:hover {
-            background: var(--primary-light);
+            background: var(--primary-dark);
             transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-        }
-        
-        button:active {
-            transform: translateY(0);
         }
         
         .reset-btn {
-            background: var(--bg-tertiary);
+            background: var(--bg-secondary);
             color: var(--text-secondary);
+            border: 1px solid var(--border);
         }
         
         .reset-btn:hover {
-            background: var(--border);
+            background: var(--bg-primary);
             color: var(--text-primary);
         }
         
@@ -278,13 +257,12 @@
         }
         
         .stat-card {
-            background: var(--bg-primary);
+            background: var(--bg-card);
             padding: 24px;
-            border-radius: 16px;
-            border: 1.5px solid var(--border-light);
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
             transition: all 0.2s ease;
             position: relative;
-            overflow: hidden;
         }
         
         .stat-card::before {
@@ -293,33 +271,33 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 3px;
+            height: 2px;
             background: var(--card-color);
         }
         
         .stat-card:hover {
             border-color: var(--border);
-            box-shadow: var(--shadow);
             transform: translateY(-2px);
+            box-shadow: var(--shadow);
         }
         
-        .stat-card:nth-child(1) { --card-color: var(--primary); }
-        .stat-card:nth-child(2) { --card-color: var(--danger); }
-        .stat-card:nth-child(3) { --card-color: var(--warning); }
-        .stat-card:nth-child(4) { --card-color: var(--purple); }
-        .stat-card:nth-child(5) { --card-color: var(--success); }
+        .stat-card:nth-child(1) { --card-color: var(--terracotta-1); }
+        .stat-card:nth-child(2) { --card-color: var(--terracotta-2); }
+        .stat-card:nth-child(3) { --card-color: var(--terracotta-3); }
+        .stat-card:nth-child(4) { --card-color: var(--terracotta-4); }
+        .stat-card:nth-child(5) { --card-color: var(--terracotta-5); }
         
         .stat-label {
             font-size: 11px;
             font-weight: 600;
             color: var(--text-secondary);
             text-transform: uppercase;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.05em;
             margin-bottom: 12px;
         }
         
         .stat-value {
-            font-size: 36px;
+            font-size: 32px;
             font-weight: 700;
             color: var(--text-primary);
             line-height: 1;
@@ -328,7 +306,7 @@
         }
         
         .stat-subvalue {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-tertiary);
             font-weight: 400;
         }
@@ -342,10 +320,10 @@
         }
         
         .chart-container {
-            background: var(--bg-primary);
+            background: var(--bg-card);
             padding: 28px;
-            border-radius: 16px;
-            border: 1.5px solid var(--border-light);
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
             transition: all 0.2s ease;
         }
         
@@ -355,7 +333,7 @@
         }
         
         .chart-title {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             color: var(--text-primary);
             margin-bottom: 20px;
@@ -366,7 +344,7 @@
             text-align: center;
             padding: 60px 20px;
             color: var(--text-tertiary);
-            font-size: 14px;
+            font-size: 13px;
         }
         
         /* Custom Analysis */
@@ -393,29 +371,9 @@
         }
         
         @media (max-width: 768px) {
-            .filters-grid, .custom-analysis-grid { grid-template-columns: 1fr; }
-            .stats-grid { grid-template-columns: 1fr; }
+            .filters-grid, .custom-analysis-grid, .stats-grid { grid-template-columns: 1fr; }
             .container { padding: 16px; }
             .header { padding: 32px; }
-        }
-        
-        /* Scrollbar */
-        .select-dropdown::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        .select-dropdown::-webkit-scrollbar-track {
-            background: var(--bg-secondary);
-            border-radius: 10px;
-        }
-        
-        .select-dropdown::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 10px;
-        }
-        
-        .select-dropdown::-webkit-scrollbar-thumb:hover {
-            background: var(--text-tertiary);
         }
     </style>
 </head>
@@ -528,31 +486,16 @@
             <div id="customChart"></div>
         </div>
     </div>
-
     <script>
         let allData=[], filteredData=[], customSelects={};
         
-        // Color palette inspired by Information is Beautiful
         const colors = {
-            primary: '#2563eb',
-            secondary: '#64748b',
-            accent: '#f59e0b',
-            success: '#10b981',
-            danger: '#ef4444',
-            purple: '#8b5cf6',
-            cyan: '#06b6d4',
-            pink: '#ec4899',
-            
-            units: ['#2563eb', '#10b981', '#f59e0b'],
-            ages: ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#8b5cf6'],
-            specialties: ['#8b5cf6', '#ec4899', '#06b6d4', '#f59e0b', '#10b981', '#6366f1', '#f43f5e', '#0ea5e9', '#a855f7', '#eab308'],
-            discharge: {
-                'Home': '#10b981',
-                'Temporary Residence': '#f59e0b',
-                'Other NHS Provider': '#3b82f6',
-                'Died': '#ef4444',
-                'Unknown': '#94a3b8'
-            }
+            primary: '#a0616a',
+            terra: ['#7d4a52', '#8d5660', '#9d626e', '#a0616a', '#b8808a', '#c19a9a', '#d4b5a6', '#e8d5c4'],
+            units: ['#7d4a52', '#a0616a', '#c19a9a'],
+            ages: ['#7d4a52', '#8d5660', '#9d626e', '#a0616a', '#ad717a', '#b8808a', '#c19a9a', '#caa9a9', '#d4b5a6', '#e8d5c4'],
+            specialties: ['#7d4a52', '#8d5660', '#9d626e', '#a0616a', '#ad717a', '#b8808a', '#c19a9a', '#caa9a9', '#d4b5a6', '#e8d5c4'],
+            discharge: {'Home': '#8d5660', 'Temporary Residence': '#a0616a', 'Other NHS Provider': '#b8808a', 'Died': '#7d4a52', 'Unknown': '#d4b5a6'}
         };
         
         class CustomSelect {
@@ -567,16 +510,16 @@
             init() {
                 const all=document.createElement('div');
                 all.className='select-option select-all';
-                all.innerHTML=`<input type="checkbox" id="${this.id}-all"><label for="${this.id}-all">Select All</label>`;
+                all.innerHTML='<input type="checkbox" id="'+this.id+'-all"><label for="'+this.id+'-all">Select All</label>';
                 this.dropdown.appendChild(all);
                 this.options.forEach(o=>{
                     const d=document.createElement('div');
                     d.className='select-option';
-                    d.innerHTML=`<input type="checkbox" id="${this.id}-${o}" value="${o}"><label for="${this.id}-${o}">${o}</label>`;
+                    d.innerHTML='<input type="checkbox" id="'+this.id+'-'+o+'" value="'+o+'"><label for="'+this.id+'-'+o+'">'+o+'</label>';
                     this.dropdown.appendChild(d);
                 });
                 this.button.onclick=e=>{e.stopPropagation();this.toggle();};
-                document.getElementById(`${this.id}-all`).onchange=e=>this.toggleAll(e.target.checked);
+                document.getElementById(this.id+'-all').onchange=e=>this.toggleAll(e.target.checked);
                 this.dropdown.querySelectorAll('input:not(#'+this.id+'-all)').forEach(cb=>cb.onchange=()=>this.updateSelected());
                 document.onclick=e=>{if(!this.container.contains(e.target))this.close();};
             }
@@ -586,39 +529,24 @@
             updateSelected(){
                 const cbs=this.dropdown.querySelectorAll('input:not(#'+this.id+'-all)');
                 this.selected=Array.from(cbs).filter(cb=>cb.checked).map(cb=>cb.value);
-                const all=document.getElementById(`${this.id}-all`);
+                const all=document.getElementById(this.id+'-all');
                 all.checked=this.selected.length===this.options.length;
                 all.indeterminate=this.selected.length>0&&this.selected.length<this.options.length;
                 const name=this.id.replace('filter','').replace('Unit','Units').replace('Specialty','Specialties').replace('AdmType','Types').replace('Age','Ages');
-                this.textEl.textContent=(this.selected.length===0||this.selected.length===this.options.length)?'All '+name:`${this.selected.length} selected`;
+                this.textEl.textContent=(this.selected.length===0||this.selected.length===this.options.length)?'All '+name:this.selected.length+' selected';
                 if(this.onChange)this.onChange();
             }
             reset(){this.dropdown.querySelectorAll('input').forEach(cb=>cb.checked=false);this.updateSelected();}
             getSelected(){return this.selected;}
         }
         
-        // Refined Plotly layout config
-        const plotlyConfig = {
-            displayModeBar: false,
-            responsive: true
-        };
-        
+        const plotlyConfig = { displayModeBar: false, responsive: true };
         const baseLayout = {
-            font: { family: 'Inter, sans-serif', size: 12, color: '#0f172a' },
-            paper_bgcolor: 'white',
-            plot_bgcolor: 'white',
-            margin: { t: 10, b: 50, l: 60, r: 20 },
-            height: 300,
-            xaxis: { 
-                gridcolor: '#f1f5f9',
-                linecolor: '#e2e8f0',
-                tickfont: { size: 11 }
-            },
-            yaxis: { 
-                gridcolor: '#f1f5f9',
-                linecolor: '#e2e8f0',
-                tickfont: { size: 11 }
-            }
+            font: { family: 'Inter, sans-serif', size: 11, color: '#2d2d2d' },
+            paper_bgcolor: 'white', plot_bgcolor: 'white',
+            margin: { t: 10, b: 50, l: 60, r: 20 }, height: 300,
+            xaxis: { gridcolor: '#f5f5f5', linecolor: '#e5e5e5', tickfont: { size: 11 } },
+            yaxis: { gridcolor: '#f5f5f5', linecolor: '#e5e5e5', tickfont: { size: 11 } }
         };
         
         fetch('./data/aggregated/master/dashboard_data.json').then(r=>r.json()).then(data=>{
@@ -628,9 +556,7 @@
             customSelects.Specialty=new CustomSelect('filterSpecialty',opts.specialties,applyFilters);
             customSelects.AdmType=new CustomSelect('filterAdmType',opts.patient_classifications,applyFilters);
             customSelects.Age=new CustomSelect('filterAge',opts.age_groups.filter(a=>a!=='Unknown'),applyFilters);
-            document.getElementById('filterOutcome').onchange=applyFilters;
-            document.getElementById('filterDateFrom').onchange=applyFilters;
-            document.getElementById('filterDateTo').onchange=applyFilters;
+            ['filterOutcome','filterDateFrom','filterDateTo'].forEach(id=>document.getElementById(id).onchange=applyFilters);
             opts.units.forEach(u=>document.getElementById('customFilterUnit').add(new Option(u,u)));
             opts.specialties.forEach(s=>document.getElementById('customFilterSpec').add(new Option(s,s)));
             opts.age_groups.filter(a=>a!=='Unknown').forEach(a=>document.getElementById('customFilterAge').add(new Option(a,a)));
@@ -658,11 +584,8 @@
         
         function resetFilters(){
             Object.values(customSelects).forEach(cs=>cs.reset());
-            document.getElementById('filterOutcome').value='';
-            document.getElementById('filterDateFrom').value='';
-            document.getElementById('filterDateTo').value='';
-            filteredData=allData;
-            updateDashboard();
+            ['filterOutcome','filterDateFrom','filterDateTo'].forEach(id=>document.getElementById(id).value='');
+            filteredData=allData; updateDashboard();
         }
         
         function updateDashboard(){
@@ -673,132 +596,54 @@
                   aa=av.length?(av.reduce((s,v)=>s+v,0)/av.length).toFixed(1):'N/A',
                   u=new Set(filteredData.map(r=>r.icu_ward)).size;
             
-            document.getElementById('statsGrid').innerHTML=`
-                <div class="stat-card"><div class="stat-label">Total Admissions</div><div class="stat-value">${t.toLocaleString()}</div><div class="stat-subvalue">From ${allData.length.toLocaleString()} total</div></div>
-                <div class="stat-card"><div class="stat-label">ICU Mortality</div><div class="stat-value">${m}%</div><div class="stat-subvalue">${d.toLocaleString()} deaths</div></div>
-                <div class="stat-card"><div class="stat-label">Avg LOS</div><div class="stat-value">${al}</div><div class="stat-subvalue">days in ICU</div></div>
-                <div class="stat-card"><div class="stat-label">Mean Age</div><div class="stat-value">${aa}</div><div class="stat-subvalue">${av.length.toLocaleString()} with age</div></div>
-                <div class="stat-card"><div class="stat-label">Active Units</div><div class="stat-value">${u}</div><div class="stat-subvalue">ICU locations</div></div>`;
+            document.getElementById('statsGrid').innerHTML='<div class="stat-card"><div class="stat-label">Total Admissions</div><div class="stat-value">'+t.toLocaleString()+'</div><div class="stat-subvalue">From '+allData.length.toLocaleString()+' total</div></div><div class="stat-card"><div class="stat-label">ICU Mortality</div><div class="stat-value">'+m+'%</div><div class="stat-subvalue">'+d.toLocaleString()+' deaths</div></div><div class="stat-card"><div class="stat-label">Avg LOS</div><div class="stat-value">'+al+'</div><div class="stat-subvalue">days in ICU</div></div><div class="stat-card"><div class="stat-label">Mean Age</div><div class="stat-value">'+aa+'</div><div class="stat-subvalue">'+av.length.toLocaleString()+' with age</div></div><div class="stat-card"><div class="stat-label">Active Units</div><div class="stat-value">'+u+'</div><div class="stat-subvalue">ICU locations</div></div>';
             
-            // Chart 1: Units
             const uc={}; filteredData.forEach(r=>uc[r.icu_ward]=(uc[r.icu_ward]||0)+1);
-            Plotly.newPlot('c1',[{
-                type:'bar',x:Object.keys(uc),y:Object.values(uc),
-                marker:{color:colors.units,line:{width:0}},
-                text:Object.values(uc).map(v=>v.toLocaleString()),textposition:'outside',
-                textfont:{size:11,color:'#475569'}
-            }],baseLayout,plotlyConfig);
+            Plotly.newPlot('c1',[{type:'bar',x:Object.keys(uc),y:Object.values(uc),marker:{color:colors.units},text:Object.values(uc).map(v=>v.toLocaleString()),textposition:'outside',textfont:{size:11,color:'#666'}}],baseLayout,plotlyConfig);
             
-            // Chart 2: Age
             const ac={}; filteredData.forEach(r=>{if(r.age_group&&r.age_group!=='Unknown')ac[r.age_group]=(ac[r.age_group]||0)+1;});
             const ao=['<16','16-18','18-30','30-40','40-50','50-60','60-70','70-80','80-90','90+'].filter(a=>ac[a]);
             if(ao.length){
-                Plotly.newPlot('c2',[{
-                    type:'bar',x:ao,y:ao.map(a=>ac[a]),
-                    marker:{color:colors.ages,line:{width:0}},
-                    text:ao.map(a=>ac[a].toLocaleString()),textposition:'outside',
-                    textfont:{size:11,color:'#475569'}
-                }],{...baseLayout,xaxis:{...baseLayout.xaxis,title:'Age Group'}},plotlyConfig);
-            } else {
-                document.getElementById('c2').innerHTML='<div class="chart-empty">No age data in current selection</div>';
-            }
+                Plotly.newPlot('c2',[{type:'bar',x:ao,y:ao.map(a=>ac[a]),marker:{color:colors.ages},text:ao.map(a=>ac[a].toLocaleString()),textposition:'outside',textfont:{size:11,color:'#666'}}],{...baseLayout,xaxis:{...baseLayout.xaxis,title:'Age Group'}},plotlyConfig);
+            }else{document.getElementById('c2').innerHTML='<div class="chart-empty">No age data</div>';}
             
-            // Chart 3: LOS Box
-            Plotly.newPlot('c3',[{
-                type:'box',y:lv,marker:{color:colors.accent},
-                boxmean:'sd',name:'LOS',line:{width:2}
-            }],{...baseLayout,yaxis:{...baseLayout.yaxis,title:'Days in ICU'},showlegend:false},plotlyConfig);
+            Plotly.newPlot('c3',[{type:'box',y:lv,marker:{color:colors.primary},boxmean:'sd',line:{width:2,color:'#7d4a52'}}],{...baseLayout,yaxis:{...baseLayout.yaxis,title:'Days'},showlegend:false},plotlyConfig);
             
-            // Chart 4: Mortality by Age
-            const ma={}; ao.forEach(ag=>{
-                const dd=filteredData.filter(r=>r.age_group===ag);
-                if(dd.length>=5){
-                    const ddd=dd.filter(r=>r.icu_death==='Yes').length;
-                    ma[ag]=((ddd/dd.length)*100).toFixed(1);
-                }
-            });
+            const ma={}; ao.forEach(ag=>{const dd=filteredData.filter(r=>r.age_group===ag);if(dd.length>=5){const ddd=dd.filter(r=>r.icu_death==='Yes').length;ma[ag]=((ddd/dd.length)*100).toFixed(1);}});
             const mak=Object.keys(ma);
             if(mak.length){
-                Plotly.newPlot('c4',[{
-                    type:'bar',x:mak,y:mak.map(a=>parseFloat(ma[a])),
-                    marker:{color:colors.danger,line:{width:0}},
-                    text:mak.map(a=>ma[a]+'%'),textposition:'outside',
-                    textfont:{size:11,color:'#475569'}
-                }],{...baseLayout,yaxis:{...baseLayout.yaxis,title:'Mortality (%)'}},plotlyConfig);
-            } else {
-                document.getElementById('c4').innerHTML='<div class="chart-empty">Insufficient data (need 5+ per group)</div>';
-            }
+                Plotly.newPlot('c4',[{type:'bar',x:mak,y:mak.map(a=>parseFloat(ma[a])),marker:{color:'#7d4a52'},text:mak.map(a=>ma[a]+'%'),textposition:'outside',textfont:{size:11,color:'#666'}}],{...baseLayout,yaxis:{...baseLayout.yaxis,title:'Mortality (%)'}},plotlyConfig);
+            }else{document.getElementById('c4').innerHTML='<div class="chart-empty">Insufficient data</div>';}
             
-            // Chart 5: Specialties
             const sc={}; filteredData.forEach(r=>sc[r.specialty]=(sc[r.specialty]||0)+1);
             const ts=Object.entries(sc).sort((a,b)=>b[1]-a[1]).slice(0,10);
-            Plotly.newPlot('c5',[{
-                type:'bar',x:ts.map(s=>s[1]),y:ts.map(s=>s[0]),orientation:'h',
-                marker:{color:colors.specialties,line:{width:0}},
-                text:ts.map(s=>s[1].toLocaleString()),textposition:'outside',
-                textfont:{size:11,color:'#475569'}
-            }],{...baseLayout,margin:{t:10,b:40,l:160,r:60},height:380},plotlyConfig);
+            Plotly.newPlot('c5',[{type:'bar',x:ts.map(s=>s[1]),y:ts.map(s=>s[0]),orientation:'h',marker:{color:colors.specialties},text:ts.map(s=>s[1].toLocaleString()),textposition:'outside',textfont:{size:11,color:'#666'}}],{...baseLayout,margin:{t:10,b:40,l:160,r:60},height:380},plotlyConfig);
             
-            // Chart 6: Discharge
             const dc={}; filteredData.forEach(r=>{const c=r.discharge_category||'Unknown';dc[c]=(dc[c]||0)+1;});
             const dco=['Home','Temporary Residence','Other NHS Provider','Died','Unknown'].filter(d=>dc[d]);
-            Plotly.newPlot('c6',[{
-                type:'bar',x:dco,y:dco.map(d=>dc[d]),
-                marker:{color:dco.map(d=>colors.discharge[d]),line:{width:0}},
-                text:dco.map(d=>dc[d].toLocaleString()),textposition:'outside',
-                textfont:{size:11,color:'#475569'}
-            }],{...baseLayout,margin:{t:10,b:90,l:60,r:20}},plotlyConfig);
+            Plotly.newPlot('c6',[{type:'bar',x:dco,y:dco.map(d=>dc[d]),marker:{color:dco.map(d=>colors.discharge[d])},text:dco.map(d=>dc[d].toLocaleString()),textposition:'outside',textfont:{size:11,color:'#666'}}],{...baseLayout,margin:{t:10,b:90,l:60,r:20}},plotlyConfig);
             
-            // Chart 7: Outcomes
-            const sv=filteredData.filter(r=>r.icu_death==='No').length;
-            const dd=filteredData.filter(r=>r.icu_death==='Yes').length;
-            Plotly.newPlot('c7',[{
-                type:'pie',labels:['Survived','Died in ICU'],values:[sv,dd],
-                marker:{colors:[colors.success,colors.danger],line:{color:'white',width:3}},
-                textinfo:'label+percent',textfont:{size:13,color:'white',family:'Inter'},
-                hole:0.5
-            }],{...baseLayout,margin:{t:10,b:10,l:10,r:10},showlegend:false},plotlyConfig);
+            const sv=filteredData.filter(r=>r.icu_death==='No').length,dd=filteredData.filter(r=>r.icu_death==='Yes').length;
+            Plotly.newPlot('c7',[{type:'pie',labels:['Survived','Died'],values:[sv,dd],marker:{colors:['#b8808a','#7d4a52'],line:{color:'white',width:3}},textinfo:'label+percent',textfont:{size:12,color:'white'},hole:0.5}],{...baseLayout,margin:{t:10,b:10,l:10,r:10},showlegend:false},plotlyConfig);
             
-            // Chart 8: Trend
             const mc={}; filteredData.forEach(r=>mc[r.year_month]=(mc[r.year_month]||0)+1);
             const sm=Object.keys(mc).sort();
-            Plotly.newPlot('c8',[{
-                type:'scatter',mode:'lines+markers',x:sm,y:sm.map(m=>mc[m]),
-                line:{color:colors.primary,width:3,shape:'spline'},
-                marker:{color:colors.primary,size:6,line:{color:'white',width:2}},
-                fill:'tozeroy',fillcolor:'rgba(37, 99, 235, 0.08)'
-            }],{...baseLayout,xaxis:{...baseLayout.xaxis,title:'Month'}},plotlyConfig);
+            Plotly.newPlot('c8',[{type:'scatter',mode:'lines+markers',x:sm,y:sm.map(m=>mc[m]),line:{color:colors.primary,width:2.5,shape:'spline'},marker:{color:colors.primary,size:5,line:{color:'white',width:2}},fill:'tozeroy',fillcolor:'rgba(160,97,106,0.12)'}],{...baseLayout,xaxis:{...baseLayout.xaxis,title:'Month'}},plotlyConfig);
         }
         
         function generateCustomChart(){
-            const metric=document.getElementById('customMetric').value;
-            const groupBy=document.getElementById('customGroupBy').value;
-            const chartType=document.getElementById('customChartType').value;
-            const fu=document.getElementById('customFilterUnit').value,
-                  fs=document.getElementById('customFilterSpec').value,
-                  fa=document.getElementById('customFilterAge').value,
-                  fo=document.getElementById('customFilterOutcome').value;
-            
-            let cd=allData.filter(r=>{
-                if(fu&&r.icu_ward!==fu)return false;
-                if(fs&&r.specialty!==fs)return false;
-                if(fa&&r.age_group!==fa)return false;
-                if(fo&&r.icu_death!==fo)return false;
-                return true;
-            });
-            
-            if(!cd.length){alert('No data matches filters');return;}
-            
+            const metric=document.getElementById('customMetric').value,groupBy=document.getElementById('customGroupBy').value,chartType=document.getElementById('customChartType').value;
+            const fu=document.getElementById('customFilterUnit').value,fs=document.getElementById('customFilterSpec').value,fa=document.getElementById('customFilterAge').value,fo=document.getElementById('customFilterOutcome').value;
+            let cd=allData.filter(r=>{if(fu&&r.icu_ward!==fu)return false;if(fs&&r.specialty!==fs)return false;if(fa&&r.age_group!==fa)return false;if(fo&&r.icu_death!==fo)return false;return true;});
+            if(!cd.length){alert('No data');return;}
             if(chartType==='box'){
                 const grp={}; cd.forEach(r=>{const k=r[groupBy];if(!grp[k])grp[k]=[];grp[k].push(r.los);});
-                const traces=Object.entries(grp).map(([k,v])=>({type:'box',y:v.filter(x=>x>0),name:k,boxmean:'sd',line:{width:2}}));
+                const traces=Object.entries(grp).map(([k,v])=>({type:'box',y:v.filter(x=>x>0),name:k,boxmean:'sd',marker:{color:colors.primary}}));
                 Plotly.newPlot('customChart',traces,{...baseLayout,height:400,yaxis:{...baseLayout.yaxis,title:'Days'}},plotlyConfig);
-                document.getElementById('customChartTitle').textContent=`LOS Distribution by ${groupBy} (n=${cd.length})`;
+                document.getElementById('customChartTitle').textContent='LOS by '+groupBy+' (n='+cd.length+')';
                 document.getElementById('customChartContainer').style.display='block';
-                document.getElementById('customChartContainer').scrollIntoView({behavior:'smooth'});
                 return;
             }
-            
             const grp={}; cd.forEach(r=>{const k=r[groupBy];if(!grp[k])grp[k]=[];grp[k].push(r);});
             const res={};
             Object.entries(grp).forEach(([k,recs])=>{
@@ -808,35 +653,19 @@
                 else if(metric==='median_los'){const srt=recs.map(r=>r.los).sort((a,b)=>a-b);const mid=Math.floor(srt.length/2);res[k]=srt.length%2?srt[mid]:((srt[mid-1]+srt[mid])/2).toFixed(1);}
                 else if(metric==='total_los')res[k]=recs.reduce((s,r)=>s+r.los,0);
             });
-            
-            let srt;
-            if(groupBy==='year_month')srt=Object.entries(res).sort((a,b)=>a[0].localeCompare(b[0]));
-            else if(metric==='count'||metric==='total_los')srt=Object.entries(res).sort((a,b)=>b[1]-a[1]).slice(0,15);
-            else srt=Object.entries(res).sort((a,b)=>a[0].localeCompare(b[0]));
-            
-            const labels=srt.map(d=>d[0]), values=srt.map(d=>parseFloat(d[1]));
-            const metricNames={'count':'Admissions','mortality':'Mortality (%)','avg_los':'Avg LOS (days)','median_los':'Median LOS (days)','total_los':'Total Patient Days'};
-            
+            let srt; if(groupBy==='year_month')srt=Object.entries(res).sort((a,b)=>a[0].localeCompare(b[0]));else if(metric==='count'||metric==='total_los')srt=Object.entries(res).sort((a,b)=>b[1]-a[1]).slice(0,15);else srt=Object.entries(res).sort((a,b)=>a[0].localeCompare(b[0]));
+            const labels=srt.map(d=>d[0]),values=srt.map(d=>parseFloat(d[1]));
+            const metricNames={'count':'Admissions','mortality':'Mortality (%)','avg_los':'Avg LOS','median_los':'Median LOS','total_los':'Total Days'};
             if(chartType==='bar'){
                 const horiz=labels.length>8||labels.some(l=>l.length>15);
-                Plotly.newPlot('customChart',[{
-                    type:'bar',[horiz?'y':'x']:labels,[horiz?'x':'y']:values,
-                    orientation:horiz?'h':'',marker:{color:colors.primary,line:{width:0}},
-                    text:values.map(v=>v.toLocaleString()),textposition:'outside',
-                    textfont:{size:11,color:'#475569'}
-                }],{...baseLayout,margin:horiz?{t:20,b:40,l:160,r:60}:{t:20,b:100,l:60,r:20},height:horiz?Math.max(400,labels.length*30):400},plotlyConfig);
-            } else {
-                Plotly.newPlot('customChart',[{
-                    type:'scatter',mode:'lines+markers',x:labels,y:values,
-                    line:{color:colors.primary,width:3},marker:{color:colors.primary,size:6},
-                    fill:'tozeroy',fillcolor:'rgba(37, 99, 235, 0.08)'
-                }],{...baseLayout,height:400},plotlyConfig);
+                Plotly.newPlot('customChart',[{type:'bar',[horiz?'y':'x']:labels,[horiz?'x':'y']:values,orientation:horiz?'h':'',marker:{color:colors.terra},text:values.map(v=>v.toLocaleString()),textposition:'outside',textfont:{size:11,color:'#666'}}],{...baseLayout,margin:horiz?{t:20,b:40,l:160,r:60}:{t:20,b:100,l:60,r:20},height:horiz?Math.max(400,labels.length*30):400},plotlyConfig);
+            }else{
+                Plotly.newPlot('customChart',[{type:'scatter',mode:'lines+markers',x:labels,y:values,line:{color:colors.primary,width:2.5},marker:{color:colors.primary,size:5},fill:'tozeroy',fillcolor:'rgba(160,97,106,0.12)'}],{...baseLayout,height:400},plotlyConfig);
             }
-            
-            document.getElementById('customChartTitle').textContent=`${metricNames[metric]} by ${groupBy} (n=${cd.length})`;
+            document.getElementById('customChartTitle').textContent=metricNames[metric]+' by '+groupBy+' (n='+cd.length+')';
             document.getElementById('customChartContainer').style.display='block';
             document.getElementById('customChartContainer').scrollIntoView({behavior:'smooth'});
         }
     </script>
 </body>
-</html> 
+</html>
