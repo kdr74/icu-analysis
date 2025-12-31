@@ -432,7 +432,7 @@
         <div class="charts-grid">
             <div class="chart-container"><div class="chart-title">Admissions by ICU Unit</div><div id="c1"></div></div>
             <div class="chart-container"><div class="chart-title">Age Distribution (n=5,299)</div><div id="c2"></div></div>
-            <div class="chart-container"><div class="chart-title">Length of Stay Distribution</div><div id="c3"></div></div>
+            <div class="chart-container"><div class="chart-title">Length of Stay (Days in ICU)</div><div id="c3"></div></div>
             <div class="chart-container"><div class="chart-title">Mortality Rate by Age Group</div><div id="c4"></div></div>
             <div class="chart-container"><div class="chart-title">Top 10 Specialties</div><div id="c5"></div></div>
             <div class="chart-container"><div class="chart-title">Discharge Destinations</div><div id="c6"></div></div>
@@ -607,7 +607,12 @@
                 Plotly.newPlot('c2',[{type:'bar',x:ao,y:ao.map(a=>ac[a]),marker:{color:colors.ages},text:ao.map(a=>ac[a].toLocaleString()),textposition:'outside',textfont:{size:11,color:'#666'}}],{...baseLayout,xaxis:{...baseLayout.xaxis,title:'Age Group'}},plotlyConfig);
             }else{document.getElementById('c2').innerHTML='<div class="chart-empty">No age data</div>';}
             
-            Plotly.newPlot('c3',[{type:'box',y:lv,marker:{color:colors.primary},boxmean:'sd',line:{width:2,color:'#7d4a52'}}],{...baseLayout,yaxis:{...baseLayout.yaxis,title:'Days'},showlegend:false},plotlyConfig);
+            const losHist={};
+            lv.forEach(d=>{const b=d<=10?d.toString():d<=20?'11-20':d<=30?'21-30':'30+';losHist[b]=(losHist[b]||0)+1;});
+            const buckets=['1','2','3','4','5','6','7','8','9','10','11-20','21-30','30+'];
+            const counts=buckets.map(b=>losHist[b]||0);
+            const med=lv.length?lv.sort((a,b)=>a-b)[Math.floor(lv.length/2)]:0;
+            Plotly.newPlot('c3',[{type:'bar',x:buckets,y:counts,marker:{color:colors.terra},text:counts.map(c=>c>0?c.toLocaleString():''),textposition:'outside',textfont:{size:11,color:'#666'}}],{...baseLayout,xaxis:{...baseLayout.xaxis,title:'Days in ICU'},yaxis:{...baseLayout.yaxis,title:'Number of Admissions'},annotations:[{text:'Median: '+med+' days  |  Mean: '+al+' days',xref:'paper',yref:'paper',x:0.5,y:1.05,showarrow:false,font:{size:11,color:'#666'}}]},plotlyConfig);
             
             const ma={}; ao.forEach(ag=>{const dd=filteredData.filter(r=>r.age_group===ag);if(dd.length>=5){const ddd=dd.filter(r=>r.icu_death==='Yes').length;ma[ag]=((ddd/dd.length)*100).toFixed(1);}});
             const mak=Object.keys(ma);
