@@ -40,11 +40,7 @@
             align-items: center;
         }
         
-        h1 {
-            font-size: 28px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
+        h1 { font-size: 28px; font-weight: 600; color: var(--text-primary); }
         
         .back-btn {
             padding: 10px 24px;
@@ -59,10 +55,7 @@
             display: inline-block;
         }
         
-        .back-btn:hover {
-            background: var(--bg-primary);
-            color: var(--text-primary);
-        }
+        .back-btn:hover { background: var(--bg-primary); color: var(--text-primary); }
         
         .controls {
             background: var(--bg-card);
@@ -72,11 +65,7 @@
             border: 1px solid var(--border-light);
         }
         
-        .controls-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 16px;
-        }
+        .controls-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
         
         .column-selector {
             display: grid;
@@ -93,22 +82,10 @@
             border-radius: 6px;
         }
         
-        .column-option input[type="checkbox"] {
-            margin-right: 8px;
-            cursor: pointer;
-        }
+        .column-option input[type="checkbox"] { margin-right: 8px; cursor: pointer; }
+        .column-option label { font-size: 13px; cursor: pointer; user-select: none; }
         
-        .column-option label {
-            font-size: 13px;
-            cursor: pointer;
-            user-select: none;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
+        .action-buttons { display: flex; gap: 12px; margin-bottom: 16px; }
         
         button {
             padding: 10px 24px;
@@ -122,9 +99,7 @@
             font-family: 'Inter', sans-serif;
         }
         
-        button:hover {
-            opacity: 0.9;
-        }
+        button:hover { opacity: 0.9; }
         
         .secondary-btn {
             background: var(--bg-secondary);
@@ -132,10 +107,7 @@
             border: 1px solid var(--border);
         }
         
-        .secondary-btn:hover {
-            background: var(--bg-primary);
-            color: var(--text-primary);
-        }
+        .secondary-btn:hover { background: var(--bg-primary); color: var(--text-primary); }
         
         .info-bar {
             display: flex;
@@ -155,16 +127,9 @@
             overflow: hidden;
         }
         
-        .table-wrapper {
-            overflow-x: auto;
-            max-height: 70vh;
-        }
+        .table-wrapper { overflow-x: auto; max-height: 70vh; }
         
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
         
         thead {
             background: var(--bg-primary);
@@ -185,57 +150,26 @@
             user-select: none;
         }
         
+        th:hover { background: rgba(160, 97, 106, 0.1); }
+        
+        .sort-indicator {
+            font-size: 10px;
+            margin-left: 4px;
+            opacity: 0.5;
+        }
+        
         td {
             padding: 10px 16px;
             border-bottom: 1px solid var(--border-light);
             color: var(--text-secondary);
         }
         
-        tbody tr:hover {
-            background: var(--bg-secondary);
-        }
+        tbody tr:hover { background: var(--bg-secondary); }
         
-        .no-data {
+        .no-data, .loading {
             text-align: center;
             padding: 60px;
             color: var(--text-tertiary);
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 60px;
-            color: var(--text-secondary);
-        }
-        
-        .filter-search {
-            width: 100%;
-            padding: 6px 8px;
-            margin-bottom: 8px;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            font-size: 12px;
-        }
-        
-        .filter-actions {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 8px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--border-light);
-        }
-        
-        .filter-btn {
-            flex: 1;
-            padding: 4px 8px;
-            font-size: 11px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        
-        .filter-btn:hover {
-            background: var(--bg-primary);
         }
     </style>
 </head>
@@ -270,7 +204,7 @@
                 <table id="dataTable">
                     <thead id="tableHead"></thead>
                     <tbody id="tableBody">
-                        <tr><td class="loading">Select columns and click "Update Table"</td></tr>
+                        <tr><td colspan="20" class="loading">Select columns and click "Update Table"</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -279,7 +213,10 @@
     
     <script>
         let allData = [];
+        let displayData = [];
         let selectedColumns = [];
+        let sortColumn = null;
+        let sortDirection = 'asc';
         
         const defaultColumns = [
             'anonymous_patient_id', 'icu_ward', 'specialty', 
@@ -287,15 +224,14 @@
             'icu_death', 'los', 'discharge_category'
         ];
         
-        // Load data
         fetch('./data/aggregated/master/dashboard_data.json')
             .then(r => r.json())
             .then(data => {
                 allData = data.records;
+                displayData = [...allData];
                 document.getElementById('recordCount').textContent = 
                     allData.length.toLocaleString() + ' records';
                 
-                // Get all unique column names
                 const columns = new Set();
                 allData.forEach(record => {
                     Object.keys(record).forEach(key => columns.add(key));
@@ -370,22 +306,17 @@
                 return;
             }
             
-            // Create table header
-            const thead = document.getElementById('tableHead');
+            sortColumn = null;
+            sortDirection = 'asc';
             displayData = [...allData];
-            thead.innerHTML = '<tr>' + selectedColumns.map(col => 
-                '<th data-column="' + col + '" onclick="toggleSort(\'' + col + '\')"><span>' + col + '</span><span class="sort-indicator" id="sort-' + col + '">⇅</span></th>'
-            ).join('') + '</tr>';
-            renderTableBody();
             
-            // Create table body
-
+            const thead = document.getElementById('tableHead');
+            thead.innerHTML = '<tr>' + selectedColumns.map(col => 
+                '<th onclick="toggleSort(\'' + col + '\')"><span>' + col + '</span><span class="sort-indicator" id="sort-' + col + '">⇅</span></th>'
+            ).join('') + '</tr>';
+            
+            renderTable();
         }
-        
-        let sortColumn = null;
-        let sortDirection = 'asc';
-        let columnFilters = {};
-        let displayData = [];
         
         function toggleSort(column) {
             if (sortColumn === column) {
@@ -395,38 +326,40 @@
                 sortDirection = 'asc';
             }
             
-            const indicators = document.querySelectorAll('.sort-indicator');
-            indicators.forEach(el => el.textContent = '⇅');
+            document.querySelectorAll('.sort-indicator').forEach(el => el.textContent = '⇅');
             const indicator = document.getElementById('sort-' + column);
             if (indicator) {
                 indicator.textContent = sortDirection === 'asc' ? '↑' : '↓';
             }
             
             displayData.sort((a, b) => {
-                let aVal = a[column] || '';
-                let bVal = b[column] || '';
+                let aVal = a[column];
+                let bVal = b[column];
+                
+                if (aVal === null || aVal === undefined || aVal === '') aVal = '';
+                if (bVal === null || bVal === undefined || bVal === '') bVal = '';
+                
                 const aNum = parseFloat(aVal);
                 const bNum = parseFloat(bVal);
+                
                 if (!isNaN(aNum) && !isNaN(bNum)) {
                     return sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
                 }
-                return sortDirection === 'asc' ? String(aVal).localeCompare(String(bVal)) : String(bVal).localeCompare(String(aVal));
-            });
-            
-            renderTableBody();
-            
-            selectedColumns.forEach(col => {
-                createColumnFilter(col);
-            });
-            
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.column-filter') && !e.target.closest('th')) {
-                    document.querySelectorAll('.column-filter').forEach(f => f.classList.remove('active'));
+                
+                const aStr = String(aVal).toLowerCase();
+                const bStr = String(bVal).toLowerCase();
+                
+                if (sortDirection === 'asc') {
+                    return aStr < bStr ? -1 : aStr > bStr ? 1 : 0;
+                } else {
+                    return bStr < aStr ? -1 : bStr > aStr ? 1 : 0;
                 }
             });
+            
+            renderTable();
         }
         
-        function renderTableBody() {
+        function renderTable() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = displayData.map(record => 
                 '<tr>' + selectedColumns.map(col => {
@@ -435,117 +368,23 @@
                     return '<td>' + val + '</td>';
                 }).join('') + '</tr>'
             ).join('');
+            
+            document.getElementById('recordCount').textContent = 
+                displayData.length.toLocaleString() + ' of ' + allData.length.toLocaleString() + ' records';
         }
         
-
-        function createColumnFilter(column) {
-            const th = document.querySelector('th[data-column="' + column + '"]');
-            if (!th) return;
-            
-            const values = [...new Set(allData.map(r => {
-                const val = r[column];
-                return val !== null && val !== undefined && val !== '' ? String(val) : 'nan';
-            }))].sort();
-            
-            let filterHTML = '<div class="column-filter" id="filter-' + column + '">';
-            filterHTML += '<div class="filter-actions">';
-            filterHTML += '<button class="filter-btn" onclick="selectAllFilter(\'' + column + '\')">All</button>';
-            filterHTML += '<button class="filter-btn" onclick="clearFilter(\'' + column + '\')">None</button>';
-            filterHTML += '</div>';
-            
-            if (values.length > 10) {
-                filterHTML += '<input type="text" class="filter-search" placeholder="Search..." onkeyup="filterSearch(this, \'' + column + '\')">';
-            }
-            
-            filterHTML += '<div id="filter-options-' + column + '">';
-            values.forEach(val => {
-                const safeId = val.replace(/[^a-zA-Z0-9]/g, '_');
-                const displayVal = val === 'nan' ? '(empty)' : val;
-                filterHTML += '<div class="filter-option">';
-                filterHTML += '<input type="checkbox" id="filter-' + column + '-' + safeId + '" value="' + val + '" checked onchange="applyColumnFilter(\'' + column + '\')">';
-                filterHTML += '<label>' + displayVal + '</label>';
-                filterHTML += '</div>';
-            });
-            filterHTML += '</div></div>';
-            
-            th.innerHTML += filterHTML;
-            
-            th.addEventListener('click', function(e) {
-                if (e.target.classList.contains('sort-indicator')) return;
-                const filter = document.getElementById('filter-' + column);
-                const allFilters = document.querySelectorAll('.column-filter');
-                allFilters.forEach(f => {
-                    if (f !== filter) f.classList.remove('active');
-                });
-                filter.classList.toggle('active');
-                e.stopPropagation();
-            });
-        }
-        
-        function selectAllFilter(column) {
-            document.querySelectorAll('#filter-options-' + column + ' input[type="checkbox"]').forEach(cb => {
-                cb.checked = true;
-            });
-            applyColumnFilter(column);
-        }
-        
-        function clearFilter(column) {
-            document.querySelectorAll('#filter-options-' + column + ' input[type="checkbox"]').forEach(cb => {
-                cb.checked = false;
-            });
-            applyColumnFilter(column);
-        }
-        
-        function filterSearch(input, column) {
-            const search = input.value.toLowerCase();
-            const options = document.querySelectorAll('#filter-options-' + column + ' .filter-option');
-            options.forEach(opt => {
-                const text = opt.textContent.toLowerCase();
-                opt.style.display = text.includes(search) ? 'flex' : 'none';
-            });
-        }
-        
-        function applyColumnFilter(column) {
-            const checked = Array.from(
-                document.querySelectorAll('#filter-options-' + column + ' input[type="checkbox"]:checked')
-            ).map(cb => cb.value);
-            
-            columnFilters[column] = checked;
-            
-            displayData = allData.filter(record => {
-                for (let col in columnFilters) {
-                    const val = record[col];
-                    const strVal = val !== null && val !== undefined && val !== '' ? String(val) : 'nan';
-                    if (!columnFilters[col].includes(strVal)) {
-                        return false;
-                    }
-                }
-                return true;
-            });
-            
-            if (sortColumn) {
-                toggleSort(sortColumn);
-                toggleSort(sortColumn);
-            }
-            
-            renderTableBody();
-            document.getElementById('recordCount').textContent = displayData.length.toLocaleString() + ' of ' + allData.length.toLocaleString() + ' records';
-        }
-
-                function exportCSV() {
+        function exportCSV() {
             if (selectedColumns.length === 0) {
                 alert('Please select columns and update the table first');
                 return;
             }
             
-            // Create CSV content
             let csv = selectedColumns.join(',') + '\n';
             
-            allData.forEach(record => {
+            displayData.forEach(record => {
                 const row = selectedColumns.map(col => {
                     let value = record[col];
                     if (value === null || value === undefined) value = '';
-                    // Escape quotes and wrap in quotes if contains comma
                     value = String(value).replace(/"/g, '""');
                     if (value.includes(',') || value.includes('\n')) {
                         value = '"' + value + '"';
@@ -555,7 +394,6 @@
                 csv += row.join(',') + '\n';
             });
             
-            // Download
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
