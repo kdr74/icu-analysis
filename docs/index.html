@@ -573,11 +573,19 @@
                   o=document.getElementById('filterOutcome').value,
                   df=document.getElementById('filterDateFrom').value,
                   dt=document.getElementById('filterDateTo').value;
+            const excludeUnit=document.getElementById('excludeEmptyUnit').checked,
+                  excludeSpec=document.getElementById('excludeEmptySpecialty').checked,
+                  excludeAdm=document.getElementById('excludeEmptyAdmType').checked,
+                  excludeAge=document.getElementById('excludeEmptyAge').checked;
             filteredData=allData.filter(r=>{
                 if(u.length&&!u.includes(r.icu_ward))return false;
                 if(sp.length&&!sp.includes(r.specialty))return false;
                 if(t.length&&!t.includes(r.patient_classification))return false;
                 if(a.length&&!a.includes(r.age_group))return false;
+                if(excludeUnit&&(!r.icu_ward||r.icu_ward===''))return false;
+                if(excludeSpec&&(!r.specialty||r.specialty===''))return false;
+                if(excludeAdm&&(!r.patient_classification||r.patient_classification===''))return false;
+                if(excludeAge&&(!r.age_group||r.age_group==='Unknown'||r.age_group===''))return false;
                 if(o&&r.icu_death!==o)return false;
                 if(df&&r.year_month<df.substring(0,7))return false;
                 if(dt&&r.year_month>dt.substring(0,7))return false;
