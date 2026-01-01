@@ -341,16 +341,58 @@
             
             // Create table header
             const thead = document.getElementById('tableHead');
+            displayData = [...allData];
             thead.innerHTML = '<tr>' + selectedColumns.map(col => 
-                '<th>' + col + '</th>'
+                '<th onclick="toggleSort(\'' + col + '\')"><span>' + col + '</span><span class="sort-indicator" id="sort-' + col + '">⇅</span></th>'
             ).join('') + '</tr>';
+            renderTableBody();
             
             // Create table body
+
+        }
+        
+        let sortColumn = null;
+        let sortDirection = 'asc';
+        let columnFilters = {};
+        let displayData = [];
+        
+        function toggleSort(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            
+            const indicators = document.querySelectorAll('.sort-indicator');
+            indicators.forEach(el => el.textContent = '⇅');
+            const indicator = document.getElementById('sort-' + column);
+            if (indicator) {
+                indicator.textContent = sortDirection === 'asc' ? '↑' : '↓';
+            }
+            
+            displayData.sort((a, b) => {
+                let aVal = a[column] || '';
+                let bVal = b[column] || '';
+                const aNum = parseFloat(aVal);
+                const bNum = parseFloat(bVal);
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
+                }
+                return sortDirection === 'asc' ? String(aVal).localeCompare(String(bVal)) : String(bVal).localeCompare(String(aVal));
+            });
+            
+            renderTableBody();
+        }
+        
+        function renderTableBody() {
             const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = allData.map(record => 
-                '<tr>' + selectedColumns.map(col => 
-                    '<td>' + (record[col] !== null && record[col] !== undefined ? record[col] : '') + '</td>'
-                ).join('') + '</tr>'
+            tbody.innerHTML = displayData.map(record => 
+                '<tr>' + selectedColumns.map(col => {
+                    let val = record[col];
+                    if (val === null || val === undefined || val === '') val = '';
+                    return '<td>' + val + '</td>';
+                }).join('') + '</tr>'
             ).join('');
         }
         
