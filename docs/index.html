@@ -13,7 +13,7 @@
         
         :root {
             /* Terracotta/Earthy palette - subtle and cohesive */
-            --primary: #a0616a;
+            --primary: #C05A44;
             --primary-light: #b8808a;
             --primary-dark: #7d4a52;
             
@@ -31,7 +31,7 @@
             --bg-secondary: #f5f5f5;
             --bg-card: #ffffff;
             
-            --text-primary: #2d2d2d;
+            --text-primary: #3D3028;
             --text-secondary: #666666;
             --text-tertiary: #999999;
             
@@ -507,12 +507,18 @@
         let allData=[], filteredData=[], customSelects={};
         
         const colors = {
-            primary: '#a0616a',
-            terra: ['#7d4a52', '#8d5660', '#9d626e', '#a0616a', '#b8808a', '#c19a9a', '#d4b5a6', '#e8d5c4'],
-            units: ['#7d4a52', '#a0616a', '#c19a9a'],
-            ages: ['#7d4a52', '#8d5660', '#9d626e', '#a0616a', '#ad717a', '#b8808a', '#c19a9a', '#caa9a9', '#d4b5a6', '#e8d5c4'],
-            specialties: ['#7d4a52', '#8d5660', '#9d626e', '#a0616a', '#ad717a', '#b8808a', '#c19a9a', '#caa9a9', '#d4b5a6', '#e8d5c4'],
-            discharge: {'Home': '#8d5660', 'Temporary Residence': '#a0616a', 'Other NHS Provider': '#b8808a', 'Died': '#7d4a52', 'Unknown': '#d4b5a6'}
+            primary: '#C05A44',
+            terra: ['#C05A44', '#B35A2D', '#C48F32', '#E2B05F', '#8A9A5B', '#4B5320', '#3A5475', '#734A32', '#A68069', '#3D3028'],
+            units: ['#C05A44', '#B35A2D', '#C48F32'],
+            ages: ['#C05A44', '#B35A2D', '#C48F32', '#E2B05F', '#8A9A5B', '#4B5320', '#3A5475', '#734A32', '#A68069', '#3D3028'],
+            specialties: ['#C05A44', '#B35A2D', '#C48F32', '#E2B05F', '#8A9A5B', '#4B5320', '#3A5475', '#734A32', '#A68069', '#3D3028'],
+            discharge: {
+                'Home': '#8A9A5B',
+                'Temporary Residence': '#E2B05F',
+                'Other NHS Provider': '#3A5475',
+                'Died': '#734A32',
+                'Unknown': '#A68069'
+            }
         };
         
         class CustomSelect {
@@ -642,7 +648,7 @@
             const ma={}; ao.forEach(ag=>{const dd=filteredData.filter(r=>r.age_group===ag);if(dd.length>=5){const ddd=dd.filter(r=>r.icu_death==='Yes').length;ma[ag]=((ddd/dd.length)*100).toFixed(1);}});
             const mak=Object.keys(ma);
             if(mak.length){
-                Plotly.newPlot('c4',[{type:'bar',x:mak,y:mak.map(a=>parseFloat(ma[a])),marker:{color:'#7d4a52'},text:mak.map(a=>ma[a]+'%'),textposition:'outside',textfont:{size:11,color:'#666'}}],{...baseLayout,yaxis:{...baseLayout.yaxis,title:'Mortality (%)'}},plotlyConfig);
+                Plotly.newPlot('c4',[{type:'bar',x:mak,y:mak.map(a=>parseFloat(ma[a])),marker:{color:'#734A32'},text:mak.map(a=>ma[a]+'%'),textposition:'outside',textfont:{size:11,color:'#666'}}],{...baseLayout,yaxis:{...baseLayout.yaxis,title:'Mortality (%)'}},plotlyConfig);
             }else{document.getElementById('c4').innerHTML='<div class="chart-empty">Insufficient data</div>';}
             
             const sc={}; filteredData.forEach(r=>sc[r.specialty]=(sc[r.specialty]||0)+1);
@@ -654,11 +660,11 @@
             Plotly.newPlot('c6',[{type:'bar',x:dco,y:dco.map(d=>dc[d]),marker:{color:dco.map(d=>colors.discharge[d])},text:dco.map(d=>dc[d].toLocaleString()),textposition:'outside',textfont:{size:11,color:'#666'}}],{...baseLayout,margin:{t:10,b:90,l:60,r:20}},plotlyConfig);
             
             const sv=filteredData.filter(r=>r.icu_death==='No').length,dd=filteredData.filter(r=>r.icu_death==='Yes').length;
-            Plotly.newPlot('c7',[{type:'pie',labels:['Survived','Died'],values:[sv,dd],marker:{colors:['#b8808a','#7d4a52'],line:{color:'white',width:3}},textinfo:'label+percent',textfont:{size:12,color:'white'},hole:0.5}],{...baseLayout,margin:{t:10,b:10,l:10,r:10},showlegend:false},plotlyConfig);
+            Plotly.newPlot('c7',[{type:'pie',labels:['Survived','Died'],values:[sv,dd],marker:{colors:['#8A9A5B','#734A32'],line:{color:'white',width:3}},textinfo:'label+percent',textfont:{size:12,color:'white'},hole:0.5}],{...baseLayout,margin:{t:10,b:10,l:10,r:10},showlegend:false},plotlyConfig);
             
             const mc={}; filteredData.forEach(r=>mc[r.year_month]=(mc[r.year_month]||0)+1);
             const sm=Object.keys(mc).sort();
-            Plotly.newPlot('c8',[{type:'scatter',mode:'lines+markers',x:sm,y:sm.map(m=>mc[m]),line:{color:colors.primary,width:2.5,shape:'spline'},marker:{color:colors.primary,size:5,line:{color:'white',width:2}},fill:'tozeroy',fillcolor:'rgba(160,97,106,0.12)'}],{...baseLayout,xaxis:{...baseLayout.xaxis,title:'Month'}},plotlyConfig);
+            Plotly.newPlot('c8',[{type:'scatter',mode:'lines+markers',x:sm,y:sm.map(m=>mc[m]),line:{color:colors.primary,width:2.5,shape:'spline'},marker:{color:colors.primary,size:5,line:{color:'white',width:2}},fill:'tozeroy',fillcolor:'rgba(192,90,68,0.12)'}],{...baseLayout,xaxis:{...baseLayout.xaxis,title:'Month'}},plotlyConfig);
         }
         
         function generateCustomChart(){
@@ -814,7 +820,7 @@
                     line:{color:colors.primary,width:2.5,shape:'spline'},
                     marker:{color:colors.primary,size:6,line:{color:'white',width:2}},
                     fill:'tozeroy',
-                    fillcolor:'rgba(160,97,106,0.12)'
+                    fillcolor:'rgba(192,90,68,0.12)'
                 }],{
                     font:{family:'Inter',size:11,color:'#2d2d2d'},
                     paper_bgcolor:'white',
