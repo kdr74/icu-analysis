@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICU Data Explorer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #a0616a;
+            --bg-primary: #fafafa;
+            --bg-secondary: #f5f5f5;
+            --bg-card: #ffffff;
+            --text-primary: #2d2d2d;
+            --text-secondary: #666666;
+            --text-tertiary: #999999;
+            --border: #e5e5e5;
+            --border-light: #f0f0f0;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 20px;
+        }
+        
+        .container { max-width: 1800px; margin: 0 auto; }
+        
+        .header {
+            background: var(--bg-card);
+            padding: 32px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .back-btn {
+            padding: 10px 24px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .back-btn:hover {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .controls {
+            background: var(--bg-card);
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-light);
+        }
+        
+        .controls-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        
+        .column-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .column-option {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+        }
+        
+        .column-option input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        
+        .column-option label {
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        button {
+            padding: 10px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+        }
+        
+        .secondary-btn {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+        
+        .secondary-btn:hover {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .table-container {
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 70vh;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        
+        thead {
+            background: var(--bg-primary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+        
+        td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border-light);
+            color: var(--text-secondary);
+        }
+        
+        tbody tr:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 60px;
+            color: var(--text-tertiary);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ICU Data Explorer</h1>
+            <a href="index.html" class="back-btn">← Back to Dashboard</a>
+        </div>
+        
+        <div class="controls">
+            <div class="controls-title">Select Columns to Display</div>
+            
+            <div class="action-buttons">
+                <button onclick="selectAll()">Select All</button>
+                <button onclick="deselectAll()" class="secondary-btn">Deselect All</button>
+                <button onclick="selectDefault()">Default Columns</button>
+                <button onclick="updateTable()">Update Table</button>
+                <button onclick="exportCSV()" class="secondary-btn">Export CSV</button>
+            </div>
+            
+            <div class="column-selector" id="columnSelector"></div>
+            
+            <div class="info-bar">
+                <span id="recordCount">Loading data...</span>
+                <span id="columnCount">0 columns selected</span>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <div class="table-wrapper">
+                <table id="dataTable">
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody">
+                        <tr><td class="loading">Select columns and click "Update Table"</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let allData = [];
+        let selectedColumns = [];
+        
+        const defaultColumns = [
+            'anonymous_patient_id', 'icu_ward', 'specialty', 
+            'patient_classification', 'age_group', 'ICU_admit_date', 
+            'icu_death', 'los', 'discharge_category'
+        ];
+        
+        // Load data
+        fetch('./data/aggregated/master/dashboard_data.json')
+            .then(r => r.json())
+            .then(data => {
+                allData = data.records;
+                document.getElementById('recordCount').textContent = 
+                    allData.length.toLocaleString() + ' records';
+                
+                // Get all unique column names
+                const columns = new Set();
+                allData.forEach(record => {
+                    Object.keys(record).forEach(key => columns.add(key));
+                });
+                
+                const sortedColumns = Array.from(columns).sort();
+                createColumnCheckboxes(sortedColumns);
+                selectDefault();
+            })
+            .catch(err => {
+                document.getElementById('recordCount').textContent = 'Error loading data';
+                console.error(err);
+            });
+        
+        function createColumnCheckboxes(columns) {
+            const selector = document.getElementById('columnSelector');
+            selector.innerHTML = '';
+            
+            columns.forEach(col => {
+                const div = document.createElement('div');
+                div.className = 'column-option';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = 'col_' + col;
+                checkbox.value = col;
+                checkbox.onchange = updateColumnCount;
+                
+                const label = document.createElement('label');
+                label.htmlFor = 'col_' + col;
+                label.textContent = col;
+                
+                div.appendChild(checkbox);
+                div.appendChild(label);
+                selector.appendChild(div);
+            });
+        }
+        
+        function selectAll() {
+            document.querySelectorAll('#columnSelector input[type="checkbox"]')
+                .forEach(cb => cb.checked = true);
+            updateColumnCount();
+        }
+        
+        function deselectAll() {
+            document.querySelectorAll('#columnSelector input[type="checkbox"]')
+                .forEach(cb => cb.checked = false);
+            updateColumnCount();
+        }
+        
+        function selectDefault() {
+            deselectAll();
+            defaultColumns.forEach(col => {
+                const checkbox = document.getElementById('col_' + col);
+                if (checkbox) checkbox.checked = true;
+            });
+            updateColumnCount();
+        }
+        
+        function updateColumnCount() {
+            const count = document.querySelectorAll('#columnSelector input[type="checkbox"]:checked').length;
+            document.getElementById('columnCount').textContent = count + ' columns selected';
+        }
+        
+        function updateTable() {
+            selectedColumns = Array.from(
+                document.querySelectorAll('#columnSelector input[type="checkbox"]:checked')
+            ).map(cb => cb.value);
+            
+            if (selectedColumns.length === 0) {
+                alert('Please select at least one column');
+                return;
+            }
+            
+            // Create table header
+            const thead = document.getElementById('tableHead');
+            thead.innerHTML = '<tr>' + selectedColumns.map(col => 
+                '<th>' + col + '</th>'
+            ).join('') + '</tr>';
+            
+            // Create table body
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = allData.map(record => 
+                '<tr>' + selectedColumns.map(col => 
+                    '<td>' + (record[col] !== null && record[col] !== undefined ? record[col] : '') + '</td>'
+                ).join('') + '</tr>'
+            ).join('');
+        }
+        
+        function exportCSV() {
+            if (selectedColumns.length === 0) {
+                alert('Please select columns and update the table first');
+                return;
+            }
+            
+            // Create CSV content
+            let csv = selectedColumns.join(',') + '\n';
+            
+            allData.forEach(record => {
+                const row = selectedColumns.map(col => {
+                    let value = record[col];
+                    if (value === null || value === undefined) value = '';
+                    // Escape quotes and wrap in quotes if contains comma
+                    value = String(value).replace(/"/g, '""');
+                    if (value.includes(',') || value.includes('\n')) {
+                        value = '"' + value + '"';
+                    }
+                    return value;
+                });
+                csv += row.join(',') + '\n';
+            });
+            
+            // Download
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'icu_data_export_' + new Date().toISOString().slice(0,10) + '.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
