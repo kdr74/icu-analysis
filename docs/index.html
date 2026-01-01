@@ -671,7 +671,7 @@
                 Plotly.newPlot('c4',[{type:'bar',x:mak,y:mak.map(a=>parseFloat(ma[a])),marker:{color:'#734A32'},text:mak.map(a=>ma[a]+'%'),textposition:'outside',textfont:{size:11,color:'#666'}}],{...baseLayout,yaxis:{...baseLayout.yaxis,title:'Mortality (%)'}},plotlyConfig);
             }else{document.getElementById('c4').innerHTML='<div class="chart-empty">Insufficient data</div>';}
             
-            const sc={}; filteredData.forEach(r=>sc[r.specialty]=(sc[r.specialty]||0)+1);
+            const sc={}; filteredData.forEach(r=>{if(r.specialty)sc[r.specialty]=(sc[r.specialty]||0)+1;});
             const ts=Object.entries(sc).sort((a,b)=>b[1]-a[1]).slice(0,10);
             Plotly.newPlot('c5',[{type:'bar',x:ts.map(s=>s[1]),y:ts.map(s=>s[0]),orientation:'h',marker:{color:colors.specialties},text:ts.map(s=>s[1].toLocaleString()),textposition:'outside',textfont:{size:11,color:'#666'}}],{...baseLayout,margin:{t:10,b:40,l:160,r:60},height:380},plotlyConfig);
             
