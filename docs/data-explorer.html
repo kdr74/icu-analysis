@@ -166,6 +166,74 @@
         
         tbody tr:hover { background: var(--bg-secondary); }
         
+        
+        .column-filter {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 12px;
+            min-width: 200px;
+            max-width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            margin-top: 4px;
+        }
+        
+        .column-filter.active { display: block; }
+        
+        .filter-option {
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .filter-option:hover { background: var(--bg-secondary); }
+        .filter-option input { margin-right: 8px; cursor: pointer; }
+        .filter-option label { cursor: pointer; flex: 1; }
+        
+        .filter-search {
+            width: 100%;
+            padding: 6px 8px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .filter-actions {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .filter-btn {
+            flex: 1;
+            padding: 4px 8px;
+            font-size: 11px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .filter-btn:hover { background: var(--bg-primary); }
+        
+        .filter-icon {
+            font-size: 10px;
+            margin-left: 4px;
+            opacity: 0.6;
+        }
         .no-data, .loading {
             text-align: center;
             padding: 60px;
@@ -217,6 +285,7 @@
         let selectedColumns = [];
         let sortColumn = null;
         let sortDirection = 'asc';
+        let columnFilters = {};
         
         const defaultColumns = [
             'anonymous_patient_id', 'icu_ward', 'specialty', 
@@ -311,9 +380,13 @@
             displayData = [...allData];
             
             const thead = document.getElementById('tableHead');
+            columnFilters = {};
+            
             thead.innerHTML = '<tr>' + selectedColumns.map(col => 
-                '<th onclick="toggleSort(\'' + col + '\')"><span>' + col + '</span><span class="sort-indicator" id="sort-' + col + '">⇅</span></th>'
+                '<th data-col="' + col + '"><span onclick="toggleSort(\'' + col + '\')">' + col + '<span class="sort-indicator" id="sort-' + col + '">⇅</span></span><span class="filter-icon" onclick="event.stopPropagation(); toggleFilter(\'' + col + '\')" title="Filter">▼</span><div class="column-filter" id="filter-' + col + '"></div></th>'
             ).join('') + '</tr>';
+            
+            selectedColumns.forEach(col => createFilter(col));
             
             renderTable();
         }
@@ -359,6 +432,108 @@
             renderTable();
         }
         
+
+        function createFilter(column) {
+            const filterDiv = document.getElementById('filter-' + column);
+            if (!filterDiv) return;
+            
+            const uniqueVals = [...new Set(allData.map(r => {
+                const val = r[column];
+                return val !== null && val !== undefined && val !== '' ? String(val) : '(empty)';
+            }))].sort();
+            
+            let html = '<div class="filter-actions">';
+            html += '<button class="filter-btn" onclick="event.stopPropagation(); selectAllFilter(\'' + column + '\')" type="button">All</button>';
+            html += '<button class="filter-btn" onclick="event.stopPropagation(); clearFilter(\'' + column + '\')" type="button">None</button>';
+            html += '<button class="filter-btn" onclick="event.stopPropagation(); toggleFilter(\'' + column + '\')" type="button">Close</button>';
+            html += '</div>';
+            
+            if (uniqueVals.length > 10) {
+                html += '<input type="text" class="filter-search" placeholder="Search..." onclick="event.stopPropagation()" onkeyup="filterSearch(this, \'' + column + '\')"/>';
+            }
+            
+            html += '<div class="filter-options-' + column + '">';
+            uniqueVals.forEach((val, idx) => {
+                const id = 'filter-' + column + '-' + idx;
+                html += '<div class="filter-option" onclick="event.stopPropagation()">';
+                html += '<input type="checkbox" id="' + id + '" value="' + val + '" checked onchange="applyFilters()"/>';
+                html += '<label for="' + id + '">' + val + '</label>';
+                html += '</div>';
+            });
+            html += '</div>';
+            
+            filterDiv.innerHTML = html;
+        }
+        
+        function toggleFilter(column) {
+            const filterDiv = document.getElementById('filter-' + column);
+            const isActive = filterDiv.classList.contains('active');
+            
+            document.querySelectorAll('.column-filter').forEach(f => f.classList.remove('active'));
+            
+            if (!isActive) {
+                filterDiv.classList.add('active');
+            }
+        }
+        
+        function selectAllFilter(column) {
+            document.querySelectorAll('.filter-options-' + column + ' input[type="checkbox"]').forEach(cb => {
+                cb.checked = true;
+            });
+            applyFilters();
+        }
+        
+        function clearFilter(column) {
+            document.querySelectorAll('.filter-options-' + column + ' input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+            applyFilters();
+        }
+        
+        function filterSearch(input, column) {
+            const search = input.value.toLowerCase();
+            document.querySelectorAll('.filter-options-' + column + ' .filter-option').forEach(opt => {
+                const text = opt.textContent.toLowerCase();
+                opt.style.display = text.includes(search) ? 'flex' : 'none';
+            });
+        }
+        
+        function applyFilters() {
+            selectedColumns.forEach(col => {
+                const checked = Array.from(
+                    document.querySelectorAll('.filter-options-' + col + ' input[type="checkbox"]:checked')
+                ).map(cb => cb.value);
+                columnFilters[col] = checked;
+            });
+            
+            displayData = allData.filter(record => {
+                for (let col in columnFilters) {
+                    const val = record[col];
+                    const strVal = val !== null && val !== undefined && val !== '' ? String(val) : '(empty)';
+                    if (!columnFilters[col].includes(strVal)) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+            
+            if (sortColumn) {
+                const currentSort = sortColumn;
+                const currentDir = sortDirection;
+                sortColumn = null;
+                toggleSort(currentSort);
+                if (currentDir === 'desc') toggleSort(currentSort);
+            }
+            
+            renderTable();
+        }
+        
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.column-filter') && !e.target.classList.contains('filter-icon')) {
+                document.querySelectorAll('.column-filter').forEach(f => f.classList.remove('active'));
+            }
+        });
+
         function renderTable() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = displayData.map(record => 
