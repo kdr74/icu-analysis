@@ -519,7 +519,6 @@
             <div id="customChart"></div>
         </div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script>
         let allData=[], filteredData=[], customSelects={};
         
@@ -589,7 +588,7 @@
             yaxis: { gridcolor: '#f5f5f5', linecolor: '#e5e5e5', tickfont: { size: 11 } }
         };
         
-        fetch('./data/aggregated/master/dashboard_data.json.gz').then(r=>r.blob()).then(blob=>blob.arrayBuffer()).then(buf=>{const dec=new TextDecoder();const decompressed=pako.inflate(new Uint8Array(buf),{to:'string'});return JSON.parse(decompressed);}).then(data=>{
+        fetch('./data/aggregated/master/dashboard_data.json').then(r=>r.json()).then(data=>{
             allData=data.records; filteredData=allData;
             const opts=data.filter_options;
             customSelects.Unit=new CustomSelect('filterUnit',opts.units,applyFilters);
