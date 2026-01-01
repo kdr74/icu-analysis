@@ -289,11 +289,11 @@
         
         const defaultColumns = [
             'anonymous_patient_id', 'icu_ward', 'specialty', 
-            'patient_classification', 'age_group', 'ICU_admit_date', 
-            'icu_death', 'los', 'discharge_category'
+            'patient_classification', 'age_at_admission', 'ICU_admit_date', 
+            'ICU_death', 'ICU_LOS', 'admit_type'
         ];
         
-        fetch('./data/aggregated/master/dashboard_data.json')
+        fetch('./data/aggregated/master/explorer_data.json')
             .then(r => r.json())
             .then(data => {
                 allData = data.records;
