@@ -279,6 +279,7 @@
         </div>
     </div>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script>
         let allData = [];
         let displayData = [];
@@ -293,8 +294,13 @@
             'ICU_death', 'ICU_LOS', 'admit_type'
         ];
         
-        fetch('./data/aggregated/master/explorer_data.json')
-            .then(r => r.json())
+        fetch('./data/aggregated/master/explorer_data.json.gz')
+            .then(r => r.blob())
+            .then(blob => blob.arrayBuffer())
+            .then(buf => {
+                const decompressed = pako.inflate(new Uint8Array(buf), {to: 'string'});
+                return JSON.parse(decompressed);
+            })
             .then(data => {
                 allData = data.records;
                 displayData = [...allData];
