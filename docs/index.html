@@ -120,6 +120,19 @@
         }
         
         /* Custom Select */
+        .exclude-empty {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        .exclude-empty input { cursor: pointer; }
+        .exclude-empty label { cursor: pointer; user-select: none; }
+        
         .custom-select { position: relative; }
         
         .select-button {
