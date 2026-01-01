@@ -343,7 +343,7 @@
             const thead = document.getElementById('tableHead');
             displayData = [...allData];
             thead.innerHTML = '<tr>' + selectedColumns.map(col => 
-                '<th onclick="toggleSort(\'' + col + '\')"><span>' + col + '</span><span class="sort-indicator" id="sort-' + col + '">⇅</span></th>'
+                '<th data-column="' + col + '" onclick="toggleSort(\'' + col + '\')"><span>' + col + '</span><span class="sort-indicator" id="sort-' + col + '">⇅</span></th>'
             ).join('') + '</tr>';
             renderTableBody();
             
@@ -383,6 +383,16 @@
             });
             
             renderTableBody();
+            
+            selectedColumns.forEach(col => {
+                createColumnFilter(col);
+            });
+            
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.column-filter') && !e.target.closest('th')) {
+                    document.querySelectorAll('.column-filter').forEach(f => f.classList.remove('active'));
+                }
+            });
         }
         
         function renderTableBody() {
@@ -396,7 +406,102 @@
             ).join('');
         }
         
-        function exportCSV() {
+
+        function createColumnFilter(column) {
+            const th = document.querySelector('th[data-column="' + column + '"]');
+            if (!th) return;
+            
+            const values = [...new Set(allData.map(r => {
+                const val = r[column];
+                return val !== null && val !== undefined && val !== '' ? String(val) : 'nan';
+            }))].sort();
+            
+            let filterHTML = '<div class="column-filter" id="filter-' + column + '">';
+            filterHTML += '<div class="filter-actions">';
+            filterHTML += '<button class="filter-btn" onclick="selectAllFilter(\'' + column + '\')">All</button>';
+            filterHTML += '<button class="filter-btn" onclick="clearFilter(\'' + column + '\')">None</button>';
+            filterHTML += '</div>';
+            
+            if (values.length > 10) {
+                filterHTML += '<input type="text" class="filter-search" placeholder="Search..." onkeyup="filterSearch(this, \'' + column + '\')">';
+            }
+            
+            filterHTML += '<div id="filter-options-' + column + '">';
+            values.forEach(val => {
+                const safeId = val.replace(/[^a-zA-Z0-9]/g, '_');
+                const displayVal = val === 'nan' ? '(empty)' : val;
+                filterHTML += '<div class="filter-option">';
+                filterHTML += '<input type="checkbox" id="filter-' + column + '-' + safeId + '" value="' + val + '" checked onchange="applyColumnFilter(\'' + column + '\')">';
+                filterHTML += '<label>' + displayVal + '</label>';
+                filterHTML += '</div>';
+            });
+            filterHTML += '</div></div>';
+            
+            th.innerHTML += filterHTML;
+            
+            th.addEventListener('click', function(e) {
+                if (e.target.classList.contains('sort-indicator')) return;
+                const filter = document.getElementById('filter-' + column);
+                const allFilters = document.querySelectorAll('.column-filter');
+                allFilters.forEach(f => {
+                    if (f !== filter) f.classList.remove('active');
+                });
+                filter.classList.toggle('active');
+                e.stopPropagation();
+            });
+        }
+        
+        function selectAllFilter(column) {
+            document.querySelectorAll('#filter-options-' + column + ' input[type="checkbox"]').forEach(cb => {
+                cb.checked = true;
+            });
+            applyColumnFilter(column);
+        }
+        
+        function clearFilter(column) {
+            document.querySelectorAll('#filter-options-' + column + ' input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+            applyColumnFilter(column);
+        }
+        
+        function filterSearch(input, column) {
+            const search = input.value.toLowerCase();
+            const options = document.querySelectorAll('#filter-options-' + column + ' .filter-option');
+            options.forEach(opt => {
+                const text = opt.textContent.toLowerCase();
+                opt.style.display = text.includes(search) ? 'flex' : 'none';
+            });
+        }
+        
+        function applyColumnFilter(column) {
+            const checked = Array.from(
+                document.querySelectorAll('#filter-options-' + column + ' input[type="checkbox"]:checked')
+            ).map(cb => cb.value);
+            
+            columnFilters[column] = checked;
+            
+            displayData = allData.filter(record => {
+                for (let col in columnFilters) {
+                    const val = record[col];
+                    const strVal = val !== null && val !== undefined && val !== '' ? String(val) : 'nan';
+                    if (!columnFilters[col].includes(strVal)) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+            
+            if (sortColumn) {
+                toggleSort(sortColumn);
+                toggleSort(sortColumn);
+            }
+            
+            renderTableBody();
+            document.getElementById('recordCount').textContent = displayData.length.toLocaleString() + ' of ' + allData.length.toLocaleString() + ' records';
+        }
+
+                function exportCSV() {
             if (selectedColumns.length === 0) {
                 alert('Please select columns and update the table first');
                 return;
