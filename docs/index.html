@@ -409,12 +409,20 @@
                         <div class="select-button"><span class="select-text">All Units</span><span class="select-arrow">▼</span></div>
                         <div class="select-dropdown"></div>
                     </div>
+                    <div class="exclude-empty">
+                        <input type="checkbox" id="excludeEmptyUnit" onchange="applyFilters()">
+                        <label for="excludeEmptyUnit">Exclude empty</label>
+                    </div>
                 </div>
                 <div class="filter-group">
                     <label class="filter-label">Specialty</label>
                     <div class="custom-select" id="filterSpecialty">
                         <div class="select-button"><span class="select-text">All Specialties</span><span class="select-arrow">▼</span></div>
                         <div class="select-dropdown"></div>
+                    </div>
+                    <div class="exclude-empty">
+                        <input type="checkbox" id="excludeEmptySpecialty" onchange="applyFilters()">
+                        <label for="excludeEmptySpecialty">Exclude empty</label>
                     </div>
                 </div>
                 <div class="filter-group">
@@ -423,12 +431,20 @@
                         <div class="select-button"><span class="select-text">All Types</span><span class="select-arrow">▼</span></div>
                         <div class="select-dropdown"></div>
                     </div>
+                    <div class="exclude-empty">
+                        <input type="checkbox" id="excludeEmptyAdmType" onchange="applyFilters()">
+                        <label for="excludeEmptyAdmType">Exclude empty</label>
+                    </div>
                 </div>
                 <div class="filter-group">
                     <label class="filter-label">Age Group</label>
                     <div class="custom-select" id="filterAge">
                         <div class="select-button"><span class="select-text">All Ages</span><span class="select-arrow">▼</span></div>
                         <div class="select-dropdown"></div>
+                    </div>
+                    <div class="exclude-empty">
+                        <input type="checkbox" id="excludeEmptyAge" onchange="applyFilters()">
+                        <label for="excludeEmptyAge">Exclude unknown</label>
                     </div>
                 </div>
                 <div class="filter-group">
