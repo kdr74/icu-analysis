@@ -672,6 +672,7 @@
             
             const sc={}; filteredData.forEach(r=>{if(r.specialty)sc[r.specialty]=(sc[r.specialty]||0)+1;});
             const ts=Object.entries(sc).sort((a,b)=>b[1]-a[1]).slice(0,10);
+            if(ts.length===0){console.log('No specialty data yet');return;}
             Plotly.newPlot('c5',[{type:'bar',x:ts.map(s=>s[1]),y:ts.map(s=>s[0]),orientation:'h',marker:{color:colors.specialties},text:ts.map(s=>s[1].toLocaleString()),textposition:'outside',hovertemplate:'%{y}: %{x}<extra></extra>',textfont:{size:11,color:'#666'}}],{...baseLayout,margin:{t:10,b:40,l:160,r:60},height:380,yaxis:{...baseLayout.yaxis,automargin:true}},plotlyConfig);
             
             const dc={}; filteredData.forEach(r=>{const c=r.discharge_category||'Unknown';dc[c]=(dc[c]||0)+1;});
