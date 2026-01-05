@@ -197,7 +197,7 @@
                         <div id="chartICULOSBubble"></div>
                     </div>
                     <div class="panel">
-                        <div id="chartICULOSMean"></div>
+                        <div id="chartICULOSBell"></div>
                     </div>
                 </div>
                 <div class="stats-summary" id="statsICULOS"></div>
@@ -213,7 +213,7 @@
                         <div id="chartHospitalLOSBubble"></div>
                     </div>
                     <div class="panel">
-                        <div id="chartHospitalLOSMean"></div>
+                        <div id="chartHospitalLOSBell"></div>
                     </div>
                 </div>
                 <div class="stats-summary" id="statsHospitalLOS"></div>
@@ -230,7 +230,7 @@
     </div>
     
     <script>
-        // R-inspired color palette - muted, professional
+        // R-inspired color palette
         const colors = {
             burgundy: '#8B4F60',
             terra: '#C05A44',
@@ -244,7 +244,6 @@
         
         let flowData = null;
         
-        // Base layout matching R aesthetic
         const baseLayout = {
             font: { family: 'Inter, sans-serif', size: 11, color: '#444' },
             paper_bgcolor: 'white',
@@ -282,7 +281,6 @@
             });
         
         function initializePage() {
-            // Populate filters
             const units = flowData.metadata.units;
             const unitSelect = document.getElementById('filterUnit');
             units.forEach(unit => {
@@ -292,17 +290,14 @@
                 unitSelect.appendChild(opt);
             });
             
-            // Set date range
             document.getElementById('dateFrom').value = flowData.metadata.date_range.start;
             document.getElementById('dateTo').value = flowData.metadata.date_range.end;
             
-            // Attach event listeners
             document.getElementById('filterUnit').onchange = updateCharts;
             document.getElementById('dateFrom').onchange = updateCharts;
             document.getElementById('dateTo').onchange = updateCharts;
             document.getElementById('viewType').onchange = updateCharts;
             
-            // Show content
             document.getElementById('loading').style.display = 'none';
             document.getElementById('content').style.display = 'block';
             
@@ -319,14 +314,13 @@
             renderDischargesChart(unit, dateFrom, dateTo, viewType);
             renderOccupancyChart(unit, dateFrom, dateTo);
             renderLOSCharts(unit, dateFrom, dateTo);
-            renderDischargeCharts(unit, dateFrom, dateTo);
+            renderDischargeCharts();
         }
         
         function renderAdmissionsChart(unit, dateFrom, dateTo, viewType) {
             const data = viewType === 'weekly' ? flowData.weekly_admissions : flowData.daily_admissions;
             const dateField = viewType === 'weekly' ? 'admit_week' : 'admit_date';
             
-            // Filter data
             let filtered = data.filter(d => {
                 if (unit !== 'all' && d.icu_ward !== unit) return false;
                 const date = d[dateField];
@@ -335,7 +329,6 @@
                 return true;
             });
             
-            // Aggregate by time period
             const agg = {};
             filtered.forEach(d => {
                 const key = d[dateField];
@@ -345,11 +338,9 @@
             const x = Object.keys(agg).sort();
             const y = x.map(k => agg[k]);
             
-            // Calculate statistics
             const mean = y.reduce((a,b) => a+b, 0) / y.length;
             const std = Math.sqrt(y.map(v => Math.pow(v - mean, 2)).reduce((a,b) => a+b, 0) / y.length);
             
-            // Create bar chart with labels
             const trace = {
                 type: 'bar',
                 x: x,
@@ -377,7 +368,6 @@
             
             Plotly.newPlot('chartAdmissions', [trace], layout, plotlyConfig);
             
-            // Update stats
             document.getElementById('statsAdmissions').innerHTML = 
                 `<em>Estimated ${viewType} admission rate = ${mean.toFixed(2)} ± ${std.toFixed(2)}</em>`;
         }
@@ -386,7 +376,6 @@
             const data = viewType === 'weekly' ? flowData.weekly_discharges : flowData.daily_discharges;
             const dateField = viewType === 'weekly' ? 'discharge_week' : 'discharge_date';
             
-            // Filter data
             let filtered = data.filter(d => {
                 if (unit !== 'all' && d.icu_ward !== unit) return false;
                 const date = d[dateField];
@@ -395,7 +384,6 @@
                 return true;
             });
             
-            // Aggregate by time period
             const agg = {};
             filtered.forEach(d => {
                 const key = d[dateField];
@@ -405,7 +393,6 @@
             const x = Object.keys(agg).sort();
             const y = x.map(k => agg[k]);
             
-            // Calculate statistics
             const mean = y.reduce((a,b) => a+b, 0) / y.length;
             
             const trace = {
@@ -440,7 +427,6 @@
         }
         
         function renderOccupancyChart(unit, dateFrom, dateTo) {
-            // Filter occupancy data
             let filtered = flowData.occupancy.filter(d => {
                 if (unit !== 'all' && d.unit !== unit) return false;
                 if (dateFrom && d.date < dateFrom) return false;
@@ -448,7 +434,6 @@
                 return true;
             });
             
-            // Aggregate by date
             const agg = {};
             filtered.forEach(d => {
                 const key = d.date;
@@ -458,7 +443,6 @@
             const x = Object.keys(agg).sort();
             const y = x.map(k => agg[k]);
             
-            // Calculate mean
             const mean = y.reduce((a,b) => a+b, 0) / y.length;
             
             const trace = {
@@ -469,7 +453,6 @@
                 hovertemplate: '%{x}<br>%{y} patients<extra></extra>'
             };
             
-            // Add mean line
             const meanLine = {
                 type: 'scatter',
                 x: [x[0], x[x.length-1]],
@@ -500,16 +483,27 @@
         }
         
         function renderLOSCharts(unit, dateFrom, dateTo) {
-            renderLOSDistribution('icu_los', 'chartICULOS', 'chartICULOSBubble', 'chartICULOSMean', 'statsICULOS', unit, dateFrom, dateTo);
-            renderLOSDistribution('total_hospital_los', 'chartHospitalLOS', 'chartHospitalLOSBubble', 'chartHospitalLOSMean', 'statsHospitalLOS', unit, dateFrom, dateTo);
+            renderLOSDistribution('icu_los', 'chartICULOS', 'chartICULOSBubble', 'chartICULOSBell', 'statsICULOS', unit, dateFrom, dateTo);
+            renderLOSDistribution('total_hospital_los', 'chartHospitalLOS', 'chartHospitalLOSBubble', 'chartHospitalLOSBell', 'statsHospitalLOS', unit, dateFrom, dateTo);
         }
         
-        function renderLOSDistribution(losType, barChartId, bubbleChartId, meanChartId, statsId, unit, dateFrom, dateTo) {
+        function renderLOSDistribution(losType, barChartId, bubbleChartId, bellChartId, statsId, unit, dateFrom, dateTo) {
             const dist = flowData.los_distributions[losType];
-            if (!dist) return;
+            if (!dist) {
+                console.log(`No data for ${losType}`);
+                return;
+            }
             
-            // Filter patient data by date range and unit
+            // Get patient data
             let patientData = dist.patient_data || [];
+            
+            if (patientData.length === 0) {
+                console.log(`No patient_data for ${losType}, showing message`);
+                document.getElementById(statsId).innerHTML = '<em>Data not available (old format)</em>';
+                return;
+            }
+            
+            // Filter by date and unit
             patientData = patientData.filter(p => {
                 if (unit !== 'all' && p.unit !== unit) return false;
                 if (dateFrom && p.admit_date < dateFrom) return false;
@@ -517,19 +511,18 @@
                 return true;
             });
             
-            // If no data after filtering, show message
             if (patientData.length === 0) {
                 document.getElementById(statsId).innerHTML = '<em>No data for selected filters</em>';
                 Plotly.newPlot(barChartId, [], baseLayout, plotlyConfig);
                 Plotly.newPlot(bubbleChartId, [], baseLayout, plotlyConfig);
-                Plotly.newPlot(meanChartId, [], baseLayout, plotlyConfig);
+                Plotly.newPlot(bellChartId, [], baseLayout, plotlyConfig);
                 return;
             }
             
             // Extract LOS values
             const values = patientData.map(p => p.los);
             
-            // Recalculate histogram for filtered data
+            // Calculate histogram
             const bins = Array.from({length: 71}, (_, i) => i);
             const counts = new Array(70).fill(0);
             values.forEach(v => {
@@ -537,7 +530,7 @@
                 if (bin >= 0) counts[bin]++;
             });
             
-            // Recalculate statistics for filtered data
+            // Calculate statistics
             const mean = values.reduce((a,b) => a+b, 0) / values.length;
             const variance = values.reduce((a,b) => a + Math.pow(b - mean, 2), 0) / values.length;
             const std = Math.sqrt(variance);
@@ -545,7 +538,7 @@
             const ci_lower = mean - 1.96 * se;
             const ci_upper = mean + 1.96 * se;
             
-            // Bar chart with counts
+            // === BAR CHART ===
             const barTrace = {
                 type: 'bar',
                 x: bins.slice(0, 70),
@@ -561,20 +554,13 @@
                 ...baseLayout,
                 height: 200,
                 margin: { t: 10, b: 40, l: 60, r: 40 },
-                xaxis: {
-                    ...baseLayout.xaxis,
-                    title: '',
-                    range: [-1, 40]
-                },
-                yaxis: {
-                    ...baseLayout.yaxis,
-                    title: 'Number of Admissions'
-                }
+                xaxis: { ...baseLayout.xaxis, title: '', range: [-1, 40] },
+                yaxis: { ...baseLayout.yaxis, title: 'Number of Admissions' }
             };
             
             Plotly.newPlot(barChartId, [barTrace], barLayout, plotlyConfig);
             
-            // Bubble chart with sized bubbles based on frequency
+            // === BUBBLE CHART ===
             // Count frequency of each LOS value
             const losFreq = {};
             values.forEach(v => {
@@ -585,14 +571,15 @@
             const bubbleX = [];
             const bubbleY = [];
             const bubbleSizes = [];
+            const bubbleText = [];
             
             Object.entries(losFreq).forEach(([los, freq]) => {
                 bubbleX.push(parseInt(los));
                 bubbleY.push(0);
                 bubbleSizes.push(freq);
+                bubbleText.push(`${los} days: ${freq} patients`);
             });
             
-            // Scale bubble sizes (min 3, max 20)
             const maxFreq = Math.max(...bubbleSizes);
             const scaledSizes = bubbleSizes.map(s => 3 + (s / maxFreq) * 17);
             
@@ -607,8 +594,7 @@
                     opacity: 0.6,
                     line: { color: colors.slate, width: 0.5 }
                 },
-                hovertemplate: '%{x} days: ' + bubbleSizes.map((s,i) => s).join(',').split(',').map((s,i) => bubbleSizes[i] + ' patients').join(',') + '<extra></extra>',
-                text: bubbleSizes.map((s, i) => `${bubbleX[i]} days: ${s} patients`),
+                text: bubbleText,
                 hoverinfo: 'text'
             };
             
@@ -616,26 +602,13 @@
                 ...baseLayout,
                 height: 80,
                 margin: { t: 0, b: 40, l: 60, r: 40 },
-                xaxis: {
-                    ...baseLayout.xaxis,
-                    title: '',
-                    range: [-1, 40]
-                },
-                yaxis: {
-                    ...baseLayout.yaxis,
-                    title: '',
-                    showticklabels: false,
-                    range: [-0.5, 0.5]
-                }
+                xaxis: { ...baseLayout.xaxis, title: '', range: [-1, 40] },
+                yaxis: { ...baseLayout.yaxis, title: '', showticklabels: false, range: [-0.5, 0.5] }
             };
             
             Plotly.newPlot(bubbleChartId, [bubbleTrace], bubbleLayout, plotlyConfig);
             
-            // Bell curve (smooth density plot)
-            // Create a smooth curve using kernel density estimation approximation
-            const sortedValues = [...values].sort((a,b) => a-b);
-            
-            // Generate points for normal distribution curve
+            // === BELL CURVE ===
             const curveX = [];
             const curveY = [];
             const xMin = Math.max(0, mean - 3*std);
@@ -643,19 +616,12 @@
             
             for (let x = xMin; x <= xMax; x += 0.5) {
                 curveX.push(x);
-                // Normal distribution formula
-                const y = (1 / (std * Math.sqrt(2 * Math.PI))) * 
-                         Math.exp(-0.5 * Math.pow((x - mean) / std, 2));
+                const y = (1 / (std * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x - mean) / std, 2));
                 curveY.push(y);
             }
             
-            // Scale Y to fit nicely (normalize to 0-1 range)
             const maxY = Math.max(...curveY);
             const scaledY = curveY.map(y => y / maxY);
-            
-            // Add confidence interval markers
-            const ciLower = statistics.ci_lower;
-            const ciUpper = statistics.ci_upper;
             
             const bellTrace = {
                 type: 'scatter',
@@ -664,15 +630,10 @@
                 mode: 'lines',
                 fill: 'tozeroy',
                 fillcolor: 'rgba(91, 107, 140, 0.3)',
-                line: { 
-                    color: colors.slate, 
-                    width: 2,
-                    shape: 'spline'
-                },
+                line: { color: colors.slate, width: 2, shape: 'spline' },
                 hovertemplate: 'Days: %{x:.1f}<extra></extra>'
             };
             
-            // Add vertical lines for mean and CI
             const meanLine = {
                 type: 'scatter',
                 x: [mean, mean],
@@ -685,76 +646,59 @@
             
             const ciLowerLine = {
                 type: 'scatter',
-                x: [ciLower, ciLower],
+                x: [ci_lower, ci_lower],
                 y: [0, 1],
                 mode: 'lines',
                 line: { color: '#333', width: 1, dash: 'dot' },
                 showlegend: false,
-                hovertemplate: `95% CI Lower: ${ciLower.toFixed(2)}<extra></extra>`
+                hovertemplate: `95% CI Lower: ${ci_lower.toFixed(2)}<extra></extra>`
             };
             
             const ciUpperLine = {
                 type: 'scatter',
-                x: [ciUpper, ciUpper],
+                x: [ci_upper, ci_upper],
                 y: [0, 1],
                 mode: 'lines',
                 line: { color: '#333', width: 1, dash: 'dot' },
                 showlegend: false,
-                hovertemplate: `95% CI Upper: ${ciUpper.toFixed(2)}<extra></extra>`
+                hovertemplate: `95% CI Upper: ${ci_upper.toFixed(2)}<extra></extra>`
             };
             
-            const meanLayout = {
+            const bellLayout = {
                 ...baseLayout,
                 height: 120,
                 margin: { t: 0, b: 40, l: 60, r: 40 },
-                xaxis: {
-                    ...baseLayout.xaxis,
-                    title: 'Days in ICU',
-                    range: [-1, 40]
-                },
-                yaxis: {
-                    ...baseLayout.yaxis,
-                    title: '',
-                    showticklabels: false,
-                    showgrid: false,
-                    range: [0, 1.1]
-                },
+                xaxis: { ...baseLayout.xaxis, title: 'Days', range: [-1, 40] },
+                yaxis: { ...baseLayout.yaxis, title: '', showticklabels: false, showgrid: false, range: [0, 1.1] },
                 annotations: [
                     {
-                        x: mean,
+                        x: ci_lower,
                         y: 1.05,
-                        text: ciLower.toFixed(1),
+                        text: ci_lower.toFixed(1),
                         showarrow: false,
-                        font: { size: 9, color: '#666' },
-                        xanchor: 'right',
-                        xshift: -5
+                        font: { size: 9, color: '#666' }
                     },
                     {
-                        x: mean,
+                        x: ci_upper,
                         y: 1.05,
-                        text: ciUpper.toFixed(1),
+                        text: ci_upper.toFixed(1),
                         showarrow: false,
-                        font: { size: 9, color: '#666' },
-                        xanchor: 'left',
-                        xshift: 5
+                        font: { size: 9, color: '#666' }
                     }
                 ]
             };
             
-            Plotly.newPlot(meanChartId, [bellTrace, meanLine, ciLowerLine, ciUpperLine], meanLayout, plotlyConfig);
+            Plotly.newPlot(bellChartId, [bellTrace, meanLine, ciLowerLine, ciUpperLine], bellLayout, plotlyConfig);
             
             // Stats summary
             document.getElementById(statsId).innerHTML = 
                 `<em>Estimated mean = ${mean.toFixed(3)} ± ${std.toFixed(3)} (n=${values.length})</em>`;
         }
         
-        function renderDischargeCharts(unit, dateFrom, dateTo) {
-            // Note: Currently using all-time discharge data
-            // To filter by date, would need discharge dates in the data
+        function renderDischargeCharts() {
             const methods = flowData.discharge_methods;
             const entries = Object.entries(methods).sort((a,b) => b[1] - a[1]);
             
-            // Pie chart
             const pieTrace = {
                 type: 'pie',
                 labels: entries.map(e => e[0]),
@@ -775,7 +719,6 @@
             
             Plotly.newPlot('chartDischargePie', [pieTrace], pieLayout, plotlyConfig);
             
-            // Bar chart below
             const barTrace = {
                 type: 'bar',
                 x: entries.map(e => e[1]),
