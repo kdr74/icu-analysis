@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Flow Analysis - ICU Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Libre+Baskerville:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #fafafa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        h1 {
+            font-family: 'Libre Baskerville', serif;
+            font-size: 2.5em;
+            font-weight: normal;
+            font-style: italic;
+            margin-bottom: 10px;
+            color: #2d2d2d;
+        }
+        
+        h2 {
+            font-family: 'Libre Baskerville', serif;
+            font-size: 1.4em;
+            font-weight: normal;
+            font-style: italic;
+            margin: 50px 0 20px 0;
+            color: #2d2d2d;
+        }
+        
+        .subtitle {
+            font-size: 0.95em;
+            color: #666;
+            margin-bottom: 40px;
+            font-weight: 300;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 40px 30px;
+            margin: 30px 0;
+            border-radius: 2px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        
+        .chart-title {
+            font-family: 'Libre Baskerville', serif;
+            font-size: 1.1em;
+            font-style: italic;
+            margin-bottom: 20px;
+            color: #2d2d2d;
+        }
+        
+        .stats-summary {
+            font-family: 'Libre Baskerville', serif;
+            font-style: italic;
+            font-size: 0.95em;
+            color: #444;
+            margin: 15px 0;
+            padding: 10px 0;
+        }
+        
+        .filters {
+            background: white;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 2px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .filter-group label {
+            font-size: 0.85em;
+            color: #666;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .filter-group select,
+        .filter-group input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9em;
+            background: white;
+        }
+        
+        #loading {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 1.1em;
+            color: #666;
+        }
+        
+        .multi-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+        
+        .panel {
+            border-bottom: 1px solid #e0e0e0;
+            padding: 20px 0;
+        }
+        
+        .panel:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Weekly Flow Analysis</h1>
+        <div class="subtitle">ICU admissions, discharges, and occupancy patterns</div>
+        
+        <div id="loading">Loading data...</div>
+        
+        <div id="content" style="display:none;">
+            <div class="filters">
+                <div class="filter-group">
+                    <label>ICU Unit</label>
+                    <select id="filterUnit">
+                        <option value="all">All Units</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Date From</label>
+                    <input type="date" id="dateFrom">
+                </div>
+                <div class="filter-group">
+                    <label>Date To</label>
+                    <input type="date" id="dateTo">
+                </div>
+                <div class="filter-group">
+                    <label>View</label>
+                    <select id="viewType">
+                        <option value="weekly">Weekly</option>
+                        <option value="daily">Daily</option>
+                    </select>
+                </div>
+            </div>
+            
+            <h2>Admission and Discharge Patterns</h2>
+            
+            <div class="chart-container">
+                <div class="chart-title">Admissions by Week</div>
+                <div id="chartAdmissions"></div>
+                <div class="stats-summary" id="statsAdmissions"></div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Discharges by Week</div>
+                <div id="chartDischarges"></div>
+                <div class="stats-summary" id="statsDischarges"></div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Daily ICU Occupancy</div>
+                <div id="chartOccupancy"></div>
+                <div class="stats-summary" id="statsOccupancy"></div>
+            </div>
+            
+            <h2>Length of Stay Analysis</h2>
+            
+            <div class="chart-container">
+                <div class="chart-title">Distribution of ICU LOS</div>
+                <div class="multi-panel">
+                    <div class="panel">
+                        <div id="chartICULOS"></div>
+                    </div>
+                    <div class="panel">
+                        <div id="chartICULOSBubble"></div>
+                    </div>
+                    <div class="panel">
+                        <div id="chartICULOSMean"></div>
+                    </div>
+                </div>
+                <div class="stats-summary" id="statsICULOS"></div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Distribution of Total Hospital LOS</div>
+                <div class="multi-panel">
+                    <div class="panel">
+                        <div id="chartHospitalLOS"></div>
+                    </div>
+                    <div class="panel">
+                        <div id="chartHospitalLOSBubble"></div>
+                    </div>
+                    <div class="panel">
+                        <div id="chartHospitalLOSMean"></div>
+                    </div>
+                </div>
+                <div class="stats-summary" id="statsHospitalLOS"></div>
+            </div>
+            
+            <h2>Discharge Analysis</h2>
+            
+            <div class="chart-container">
+                <div class="chart-title">Distribution of Discharge Method</div>
+                <div id="chartDischargePie"></div>
+                <div id="chartDischargeBar"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // R-inspired color palette - muted, professional
+        const colors = {
+            burgundy: '#8B4F60',
+            terra: '#C05A44',
+            orange: '#D4834F',
+            sage: '#8A9A5B',
+            slate: '#5B6B8C',
+            lavender: '#9C8FAD',
+            lightBlue: '#A8C5D6',
+            lightGray: '#D8D8D8'
+        };
+        
+        let flowData = null;
+        
+        // Base layout matching R aesthetic
+        const baseLayout = {
+            font: { family: 'Inter, sans-serif', size: 11, color: '#444' },
+            paper_bgcolor: 'white',
+            plot_bgcolor: 'white',
+            margin: { t: 20, b: 60, l: 80, r: 40 },
+            showlegend: false,
+            xaxis: {
+                showgrid: false,
+                showline: true,
+                linecolor: '#333',
+                linewidth: 1,
+                tickfont: { size: 10 }
+            },
+            yaxis: {
+                showgrid: true,
+                gridcolor: '#f0f0f0',
+                showline: true,
+                linecolor: '#333',
+                linewidth: 1,
+                tickfont: { size: 10 }
+            }
+        };
+        
+        const plotlyConfig = { displayModeBar: false, responsive: true };
+        
+        // Load data
+        fetch('./data/aggregated/master/weekly_flow_data.json')
+            .then(r => r.json())
+            .then(data => {
+                flowData = data;
+                initializePage();
+            })
+            .catch(err => {
+                document.getElementById('loading').textContent = 'Error loading data: ' + err.message;
+            });
+        
+        function initializePage() {
+            // Populate filters
+            const units = flowData.metadata.units;
+            const unitSelect = document.getElementById('filterUnit');
+            units.forEach(unit => {
+                const opt = document.createElement('option');
+                opt.value = unit;
+                opt.textContent = unit;
+                unitSelect.appendChild(opt);
+            });
+            
+            // Set date range
+            document.getElementById('dateFrom').value = flowData.metadata.date_range.start;
+            document.getElementById('dateTo').value = flowData.metadata.date_range.end;
+            
+            // Attach event listeners
+            document.getElementById('filterUnit').onchange = updateCharts;
+            document.getElementById('dateFrom').onchange = updateCharts;
+            document.getElementById('dateTo').onchange = updateCharts;
+            document.getElementById('viewType').onchange = updateCharts;
+            
+            // Show content
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            
+            updateCharts();
+        }
+        
+        function updateCharts() {
+            const unit = document.getElementById('filterUnit').value;
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const viewType = document.getElementById('viewType').value;
+            
+            renderAdmissionsChart(unit, dateFrom, dateTo, viewType);
+            renderDischargesChart(unit, dateFrom, dateTo, viewType);
+            renderOccupancyChart(unit, dateFrom, dateTo);
+            renderLOSCharts();
+            renderDischargeCharts();
+        }
+        
+        function renderAdmissionsChart(unit, dateFrom, dateTo, viewType) {
+            const data = viewType === 'weekly' ? flowData.weekly_admissions : flowData.daily_admissions;
+            const dateField = viewType === 'weekly' ? 'admit_week' : 'admit_date';
+            
+            // Filter data
+            let filtered = data.filter(d => {
+                if (unit !== 'all' && d.icu_ward !== unit) return false;
+                const date = d[dateField];
+                if (dateFrom && date < dateFrom) return false;
+                if (dateTo && date > dateTo) return false;
+                return true;
+            });
+            
+            // Aggregate by time period
+            const agg = {};
+            filtered.forEach(d => {
+                const key = d[dateField];
+                agg[key] = (agg[key] || 0) + d.count;
+            });
+            
+            const x = Object.keys(agg).sort();
+            const y = x.map(k => agg[k]);
+            
+            // Calculate statistics
+            const mean = y.reduce((a,b) => a+b, 0) / y.length;
+            const std = Math.sqrt(y.map(v => Math.pow(v - mean, 2)).reduce((a,b) => a+b, 0) / y.length);
+            
+            // Create bar chart with labels
+            const trace = {
+                type: 'bar',
+                x: x,
+                y: y,
+                text: y.map(v => v.toString()),
+                textposition: 'outside',
+                textfont: { size: 10, color: '#333' },
+                marker: { color: colors.orange },
+                hovertemplate: '%{x}<br>%{y} admissions<extra></extra>'
+            };
+            
+            const layout = {
+                ...baseLayout,
+                height: 300,
+                xaxis: {
+                    ...baseLayout.xaxis,
+                    title: viewType === 'weekly' ? 'Week' : 'Date',
+                    tickangle: -45
+                },
+                yaxis: {
+                    ...baseLayout.yaxis,
+                    title: 'Number of Admissions'
+                }
+            };
+            
+            Plotly.newPlot('chartAdmissions', [trace], layout, plotlyConfig);
+            
+            // Update stats
+            document.getElementById('statsAdmissions').innerHTML = 
+                `<em>Estimated ${viewType} admission rate = ${mean.toFixed(2)} ± ${std.toFixed(2)}</em>`;
+        }
+        
+        function renderDischargesChart(unit, dateFrom, dateTo, viewType) {
+            const data = viewType === 'weekly' ? flowData.weekly_discharges : flowData.daily_discharges;
+            const dateField = viewType === 'weekly' ? 'discharge_week' : 'discharge_date';
+            
+            // Filter data
+            let filtered = data.filter(d => {
+                if (unit !== 'all' && d.icu_ward !== unit) return false;
+                const date = d[dateField];
+                if (dateFrom && date < dateFrom) return false;
+                if (dateTo && date > dateTo) return false;
+                return true;
+            });
+            
+            // Aggregate by time period
+            const agg = {};
+            filtered.forEach(d => {
+                const key = d[dateField];
+                agg[key] = (agg[key] || 0) + d.count;
+            });
+            
+            const x = Object.keys(agg).sort();
+            const y = x.map(k => agg[k]);
+            
+            // Calculate statistics
+            const mean = y.reduce((a,b) => a+b, 0) / y.length;
+            
+            const trace = {
+                type: 'bar',
+                x: x,
+                y: y,
+                text: y.map(v => v.toString()),
+                textposition: 'outside',
+                textfont: { size: 10, color: '#333' },
+                marker: { color: colors.burgundy },
+                hovertemplate: '%{x}<br>%{y} discharges<extra></extra>'
+            };
+            
+            const layout = {
+                ...baseLayout,
+                height: 300,
+                xaxis: {
+                    ...baseLayout.xaxis,
+                    title: viewType === 'weekly' ? 'Week' : 'Date',
+                    tickangle: -45
+                },
+                yaxis: {
+                    ...baseLayout.yaxis,
+                    title: 'Number of Discharges'
+                }
+            };
+            
+            Plotly.newPlot('chartDischarges', [trace], layout, plotlyConfig);
+            
+            document.getElementById('statsDischarges').innerHTML = 
+                `<em>Mean ${viewType} discharge rate = ${mean.toFixed(2)}</em>`;
+        }
+        
+        function renderOccupancyChart(unit, dateFrom, dateTo) {
+            // Filter occupancy data
+            let filtered = flowData.occupancy.filter(d => {
+                if (unit !== 'all' && d.unit !== unit) return false;
+                if (dateFrom && d.date < dateFrom) return false;
+                if (dateTo && d.date > dateTo) return false;
+                return true;
+            });
+            
+            // Aggregate by date
+            const agg = {};
+            filtered.forEach(d => {
+                const key = d.date;
+                agg[key] = (agg[key] || 0) + d.occupancy;
+            });
+            
+            const x = Object.keys(agg).sort();
+            const y = x.map(k => agg[k]);
+            
+            // Calculate mean
+            const mean = y.reduce((a,b) => a+b, 0) / y.length;
+            
+            const trace = {
+                type: 'bar',
+                x: x,
+                y: y,
+                marker: { color: colors.sage },
+                hovertemplate: '%{x}<br>%{y} patients<extra></extra>'
+            };
+            
+            // Add mean line
+            const meanLine = {
+                type: 'scatter',
+                x: [x[0], x[x.length-1]],
+                y: [mean, mean],
+                mode: 'lines',
+                line: { color: '#333', width: 1, dash: 'dash' },
+                hovertemplate: `Mean: ${mean.toFixed(2)}<extra></extra>`
+            };
+            
+            const layout = {
+                ...baseLayout,
+                height: 350,
+                xaxis: {
+                    ...baseLayout.xaxis,
+                    title: 'Date',
+                    tickangle: -45
+                },
+                yaxis: {
+                    ...baseLayout.yaxis,
+                    title: 'Occupancy'
+                }
+            };
+            
+            Plotly.newPlot('chartOccupancy', [trace, meanLine], layout, plotlyConfig);
+            
+            document.getElementById('statsOccupancy').innerHTML = 
+                `<em>Mean daily occupancy = ${mean.toFixed(3)}</em>`;
+        }
+        
+        function renderLOSCharts() {
+            renderLOSDistribution('icu_los', 'chartICULOS', 'chartICULOSBubble', 'chartICULOSMean', 'statsICULOS');
+            renderLOSDistribution('total_hospital_los', 'chartHospitalLOS', 'chartHospitalLOSBubble', 'chartHospitalLOSMean', 'statsHospitalLOS');
+        }
+        
+        function renderLOSDistribution(losType, barChartId, bubbleChartId, meanChartId, statsId) {
+            const dist = flowData.los_distributions[losType];
+            if (!dist) return;
+            
+            const { histogram, statistics, values } = dist;
+            
+            // Bar chart with counts
+            const barTrace = {
+                type: 'bar',
+                x: histogram.bins,
+                y: histogram.counts,
+                text: histogram.counts.map(c => c > 0 ? c.toString() : ''),
+                textposition: 'outside',
+                textfont: { size: 9, color: '#333' },
+                marker: { color: colors.burgundy },
+                hovertemplate: '%{x} days: %{y} patients<extra></extra>'
+            };
+            
+            const barLayout = {
+                ...baseLayout,
+                height: 200,
+                margin: { t: 10, b: 40, l: 60, r: 40 },
+                xaxis: {
+                    ...baseLayout.xaxis,
+                    title: '',
+                    range: [-1, 40]
+                },
+                yaxis: {
+                    ...baseLayout.yaxis,
+                    title: 'Number of Admissions'
+                }
+            };
+            
+            Plotly.newPlot(barChartId, [barTrace], barLayout, plotlyConfig);
+            
+            // Bubble chart (scatter of individual values)
+            const bubbleTrace = {
+                type: 'scatter',
+                x: values,
+                y: values.map(() => 0),
+                mode: 'markers',
+                marker: { 
+                    color: colors.slate, 
+                    size: 4,
+                    opacity: 0.3
+                },
+                hoverinfo: 'x'
+            };
+            
+            const bubbleLayout = {
+                ...baseLayout,
+                height: 80,
+                margin: { t: 0, b: 40, l: 60, r: 40 },
+                xaxis: {
+                    ...baseLayout.xaxis,
+                    title: '',
+                    range: [-1, 40]
+                },
+                yaxis: {
+                    ...baseLayout.yaxis,
+                    title: '',
+                    showticklabels: false,
+                    range: [-0.5, 0.5]
+                }
+            };
+            
+            Plotly.newPlot(bubbleChartId, [bubbleTrace], bubbleLayout, plotlyConfig);
+            
+            // Mean with confidence interval
+            const meanTrace = {
+                type: 'scatter',
+                x: [statistics.mean],
+                y: [0],
+                mode: 'markers+lines',
+                marker: { color: colors.slate, size: 8 },
+                error_x: {
+                    type: 'data',
+                    symmetric: false,
+                    array: [statistics.ci_upper - statistics.mean],
+                    arrayminus: [statistics.mean - statistics.ci_lower],
+                    color: colors.slate,
+                    thickness: 1.5,
+                    width: 4
+                },
+                hovertemplate: `Mean: ${statistics.mean.toFixed(2)}<br>95% CI: [${statistics.ci_lower.toFixed(2)}, ${statistics.ci_upper.toFixed(2)}]<extra></extra>`
+            };
+            
+            const meanLayout = {
+                ...baseLayout,
+                height: 80,
+                margin: { t: 0, b: 40, l: 60, r: 40 },
+                xaxis: {
+                    ...baseLayout.xaxis,
+                    title: 'Days in ICU',
+                    range: [-1, 40]
+                },
+                yaxis: {
+                    ...baseLayout.yaxis,
+                    title: '',
+                    showticklabels: false,
+                    showgrid: false,
+                    range: [-0.5, 0.5]
+                }
+            };
+            
+            Plotly.newPlot(meanChartId, [meanTrace], meanLayout, plotlyConfig);
+            
+            // Stats summary
+            document.getElementById(statsId).innerHTML = 
+                `<em>Estimated mean = ${statistics.mean.toFixed(3)} ± ${statistics.std.toFixed(3)}</em>`;
+        }
+        
+        function renderDischargeCharts() {
+            const methods = flowData.discharge_methods;
+            const entries = Object.entries(methods).sort((a,b) => b[1] - a[1]);
+            
+            // Pie chart
+            const pieTrace = {
+                type: 'pie',
+                labels: entries.map(e => e[0]),
+                values: entries.map(e => e[1]),
+                marker: {
+                    colors: [colors.lightBlue, colors.lavender, colors.sage, colors.lightGray]
+                },
+                textinfo: 'label+percent',
+                textfont: { size: 11 },
+                hovertemplate: '%{label}<br>%{value} patients (%{percent})<extra></extra>'
+            };
+            
+            const pieLayout = {
+                ...baseLayout,
+                height: 400,
+                showlegend: false
+            };
+            
+            Plotly.newPlot('chartDischargePie', [pieTrace], pieLayout, plotlyConfig);
+            
+            // Bar chart below
+            const barTrace = {
+                type: 'bar',
+                x: entries.map(e => e[1]),
+                y: entries.map(e => e[0]),
+                orientation: 'h',
+                text: entries.map(e => e[1].toString()),
+                textposition: 'outside',
+                marker: { color: colors.burgundy },
+                hovertemplate: '%{y}: %{x} patients<extra></extra>'
+            };
+            
+            const barLayout = {
+                ...baseLayout,
+                height: 250,
+                margin: { t: 20, b: 40, l: 300, r: 60 },
+                xaxis: {
+                    ...baseLayout.xaxis,
+                    title: 'Number of Patients'
+                },
+                yaxis: {
+                    ...baseLayout.yaxis,
+                    title: ''
+                }
+            };
+            
+            Plotly.newPlot('chartDischargeBar', [barTrace], barLayout, plotlyConfig);
+        }
+    </script>
+</body>
+</html>
