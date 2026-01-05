@@ -45,6 +45,7 @@ def generate_weekly_flow_data():
     
     # === LENGTH OF STAY DISTRIBUTIONS ===
     # Store full distributions for histogram rendering
+    # IMPORTANT: Store individual patient data with dates for filtering
     los_distributions = {}
     
     for col, name in [
@@ -69,6 +70,16 @@ def generate_weekly_flow_data():
             ci_lower = mean - 1.96 * se
             ci_upper = mean + 1.96 * se
             
+            # Create patient-level data with dates for filtering
+            patient_los_data = []
+            for idx in values.index:
+                if pd.notna(df.loc[idx, 'ICU_admit_date']):
+                    patient_los_data.append({
+                        'los': float(df.loc[idx, col]),
+                        'admit_date': df.loc[idx, 'ICU_admit_date'].strftime('%Y-%m-%d'),
+                        'unit': str(df.loc[idx, 'icu_ward']) if pd.notna(df.loc[idx, 'icu_ward']) else 'Unknown'
+                    })
+            
             los_distributions[name] = {
                 'histogram': {
                     'bins': [int(b) for b in bin_edges[:-1]],  # Left edges
@@ -82,8 +93,8 @@ def generate_weekly_flow_data():
                     'ci_lower': round(ci_lower, 3),
                     'ci_upper': round(ci_upper, 3)
                 },
-                # Keep raw values for bubble plots (sample if >1000 points)
-                'values': values.sample(min(1000, len(values))).tolist()
+                # Patient-level data for client-side filtering
+                'patient_data': patient_los_data
             }
             
             print(f"\n{name}:")

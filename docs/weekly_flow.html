@@ -318,8 +318,8 @@
             renderAdmissionsChart(unit, dateFrom, dateTo, viewType);
             renderDischargesChart(unit, dateFrom, dateTo, viewType);
             renderOccupancyChart(unit, dateFrom, dateTo);
-            renderLOSCharts();
-            renderDischargeCharts();
+            renderLOSCharts(unit, dateFrom, dateTo);
+            renderDischargeCharts(unit, dateFrom, dateTo);
         }
         
         function renderAdmissionsChart(unit, dateFrom, dateTo, viewType) {
@@ -499,23 +499,58 @@
                 `<em>Mean daily occupancy = ${mean.toFixed(3)}</em>`;
         }
         
-        function renderLOSCharts() {
-            renderLOSDistribution('icu_los', 'chartICULOS', 'chartICULOSBubble', 'chartICULOSMean', 'statsICULOS');
-            renderLOSDistribution('total_hospital_los', 'chartHospitalLOS', 'chartHospitalLOSBubble', 'chartHospitalLOSMean', 'statsHospitalLOS');
+        function renderLOSCharts(unit, dateFrom, dateTo) {
+            renderLOSDistribution('icu_los', 'chartICULOS', 'chartICULOSBubble', 'chartICULOSMean', 'statsICULOS', unit, dateFrom, dateTo);
+            renderLOSDistribution('total_hospital_los', 'chartHospitalLOS', 'chartHospitalLOSBubble', 'chartHospitalLOSMean', 'statsHospitalLOS', unit, dateFrom, dateTo);
         }
         
-        function renderLOSDistribution(losType, barChartId, bubbleChartId, meanChartId, statsId) {
+        function renderLOSDistribution(losType, barChartId, bubbleChartId, meanChartId, statsId, unit, dateFrom, dateTo) {
             const dist = flowData.los_distributions[losType];
             if (!dist) return;
             
-            const { histogram, statistics, values } = dist;
+            // Filter patient data by date range and unit
+            let patientData = dist.patient_data || [];
+            patientData = patientData.filter(p => {
+                if (unit !== 'all' && p.unit !== unit) return false;
+                if (dateFrom && p.admit_date < dateFrom) return false;
+                if (dateTo && p.admit_date > dateTo) return false;
+                return true;
+            });
+            
+            // If no data after filtering, show message
+            if (patientData.length === 0) {
+                document.getElementById(statsId).innerHTML = '<em>No data for selected filters</em>';
+                Plotly.newPlot(barChartId, [], baseLayout, plotlyConfig);
+                Plotly.newPlot(bubbleChartId, [], baseLayout, plotlyConfig);
+                Plotly.newPlot(meanChartId, [], baseLayout, plotlyConfig);
+                return;
+            }
+            
+            // Extract LOS values
+            const values = patientData.map(p => p.los);
+            
+            // Recalculate histogram for filtered data
+            const bins = Array.from({length: 71}, (_, i) => i);
+            const counts = new Array(70).fill(0);
+            values.forEach(v => {
+                const bin = Math.min(Math.floor(v), 69);
+                if (bin >= 0) counts[bin]++;
+            });
+            
+            // Recalculate statistics for filtered data
+            const mean = values.reduce((a,b) => a+b, 0) / values.length;
+            const variance = values.reduce((a,b) => a + Math.pow(b - mean, 2), 0) / values.length;
+            const std = Math.sqrt(variance);
+            const se = std / Math.sqrt(values.length);
+            const ci_lower = mean - 1.96 * se;
+            const ci_upper = mean + 1.96 * se;
             
             // Bar chart with counts
             const barTrace = {
                 type: 'bar',
-                x: histogram.bins,
-                y: histogram.counts,
-                text: histogram.counts.map(c => c > 0 ? c.toString() : ''),
+                x: bins.slice(0, 70),
+                y: counts,
+                text: counts.map(c => c > 0 ? c.toString() : ''),
                 textposition: 'outside',
                 textfont: { size: 9, color: '#333' },
                 marker: { color: colors.burgundy },
@@ -539,18 +574,42 @@
             
             Plotly.newPlot(barChartId, [barTrace], barLayout, plotlyConfig);
             
-            // Bubble chart (scatter of individual values)
+            // Bubble chart with sized bubbles based on frequency
+            // Count frequency of each LOS value
+            const losFreq = {};
+            values.forEach(v => {
+                const rounded = Math.round(v);
+                losFreq[rounded] = (losFreq[rounded] || 0) + 1;
+            });
+            
+            const bubbleX = [];
+            const bubbleY = [];
+            const bubbleSizes = [];
+            
+            Object.entries(losFreq).forEach(([los, freq]) => {
+                bubbleX.push(parseInt(los));
+                bubbleY.push(0);
+                bubbleSizes.push(freq);
+            });
+            
+            // Scale bubble sizes (min 3, max 20)
+            const maxFreq = Math.max(...bubbleSizes);
+            const scaledSizes = bubbleSizes.map(s => 3 + (s / maxFreq) * 17);
+            
             const bubbleTrace = {
                 type: 'scatter',
-                x: values,
-                y: values.map(() => 0),
+                x: bubbleX,
+                y: bubbleY,
                 mode: 'markers',
                 marker: { 
-                    color: colors.slate, 
-                    size: 4,
-                    opacity: 0.3
+                    color: colors.lightGray,
+                    size: scaledSizes,
+                    opacity: 0.6,
+                    line: { color: colors.slate, width: 0.5 }
                 },
-                hoverinfo: 'x'
+                hovertemplate: '%{x} days: ' + bubbleSizes.map((s,i) => s).join(',').split(',').map((s,i) => bubbleSizes[i] + ' patients').join(',') + '<extra></extra>',
+                text: bubbleSizes.map((s, i) => `${bubbleX[i]} days: ${s} patients`),
+                hoverinfo: 'text'
             };
             
             const bubbleLayout = {
@@ -572,28 +631,81 @@
             
             Plotly.newPlot(bubbleChartId, [bubbleTrace], bubbleLayout, plotlyConfig);
             
-            // Mean with confidence interval
-            const meanTrace = {
+            // Bell curve (smooth density plot)
+            // Create a smooth curve using kernel density estimation approximation
+            const sortedValues = [...values].sort((a,b) => a-b);
+            
+            // Generate points for normal distribution curve
+            const curveX = [];
+            const curveY = [];
+            const xMin = Math.max(0, mean - 3*std);
+            const xMax = Math.min(40, mean + 3*std);
+            
+            for (let x = xMin; x <= xMax; x += 0.5) {
+                curveX.push(x);
+                // Normal distribution formula
+                const y = (1 / (std * Math.sqrt(2 * Math.PI))) * 
+                         Math.exp(-0.5 * Math.pow((x - mean) / std, 2));
+                curveY.push(y);
+            }
+            
+            // Scale Y to fit nicely (normalize to 0-1 range)
+            const maxY = Math.max(...curveY);
+            const scaledY = curveY.map(y => y / maxY);
+            
+            // Add confidence interval markers
+            const ciLower = statistics.ci_lower;
+            const ciUpper = statistics.ci_upper;
+            
+            const bellTrace = {
                 type: 'scatter',
-                x: [statistics.mean],
-                y: [0],
-                mode: 'markers+lines',
-                marker: { color: colors.slate, size: 8 },
-                error_x: {
-                    type: 'data',
-                    symmetric: false,
-                    array: [statistics.ci_upper - statistics.mean],
-                    arrayminus: [statistics.mean - statistics.ci_lower],
-                    color: colors.slate,
-                    thickness: 1.5,
-                    width: 4
+                x: curveX,
+                y: scaledY,
+                mode: 'lines',
+                fill: 'tozeroy',
+                fillcolor: 'rgba(91, 107, 140, 0.3)',
+                line: { 
+                    color: colors.slate, 
+                    width: 2,
+                    shape: 'spline'
                 },
-                hovertemplate: `Mean: ${statistics.mean.toFixed(2)}<br>95% CI: [${statistics.ci_lower.toFixed(2)}, ${statistics.ci_upper.toFixed(2)}]<extra></extra>`
+                hovertemplate: 'Days: %{x:.1f}<extra></extra>'
+            };
+            
+            // Add vertical lines for mean and CI
+            const meanLine = {
+                type: 'scatter',
+                x: [mean, mean],
+                y: [0, 1],
+                mode: 'lines',
+                line: { color: '#333', width: 2, dash: 'dash' },
+                showlegend: false,
+                hovertemplate: `Mean: ${mean.toFixed(2)}<extra></extra>`
+            };
+            
+            const ciLowerLine = {
+                type: 'scatter',
+                x: [ciLower, ciLower],
+                y: [0, 1],
+                mode: 'lines',
+                line: { color: '#333', width: 1, dash: 'dot' },
+                showlegend: false,
+                hovertemplate: `95% CI Lower: ${ciLower.toFixed(2)}<extra></extra>`
+            };
+            
+            const ciUpperLine = {
+                type: 'scatter',
+                x: [ciUpper, ciUpper],
+                y: [0, 1],
+                mode: 'lines',
+                line: { color: '#333', width: 1, dash: 'dot' },
+                showlegend: false,
+                hovertemplate: `95% CI Upper: ${ciUpper.toFixed(2)}<extra></extra>`
             };
             
             const meanLayout = {
                 ...baseLayout,
-                height: 80,
+                height: 120,
                 margin: { t: 0, b: 40, l: 60, r: 40 },
                 xaxis: {
                     ...baseLayout.xaxis,
@@ -605,18 +717,40 @@
                     title: '',
                     showticklabels: false,
                     showgrid: false,
-                    range: [-0.5, 0.5]
-                }
+                    range: [0, 1.1]
+                },
+                annotations: [
+                    {
+                        x: mean,
+                        y: 1.05,
+                        text: ciLower.toFixed(1),
+                        showarrow: false,
+                        font: { size: 9, color: '#666' },
+                        xanchor: 'right',
+                        xshift: -5
+                    },
+                    {
+                        x: mean,
+                        y: 1.05,
+                        text: ciUpper.toFixed(1),
+                        showarrow: false,
+                        font: { size: 9, color: '#666' },
+                        xanchor: 'left',
+                        xshift: 5
+                    }
+                ]
             };
             
-            Plotly.newPlot(meanChartId, [meanTrace], meanLayout, plotlyConfig);
+            Plotly.newPlot(meanChartId, [bellTrace, meanLine, ciLowerLine, ciUpperLine], meanLayout, plotlyConfig);
             
             // Stats summary
             document.getElementById(statsId).innerHTML = 
-                `<em>Estimated mean = ${statistics.mean.toFixed(3)} ± ${statistics.std.toFixed(3)}</em>`;
+                `<em>Estimated mean = ${mean.toFixed(3)} ± ${std.toFixed(3)} (n=${values.length})</em>`;
         }
         
-        function renderDischargeCharts() {
+        function renderDischargeCharts(unit, dateFrom, dateTo) {
+            // Note: Currently using all-time discharge data
+            // To filter by date, would need discharge dates in the data
             const methods = flowData.discharge_methods;
             const entries = Object.entries(methods).sort((a,b) => b[1] - a[1]);
             
